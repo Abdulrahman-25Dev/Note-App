@@ -36,7 +36,7 @@ const Favorites = () => {
 
   // حالة الملاحظات المفضلة  // حالة البحث
   const [search, setSearch] = useState<string>('');
-
+ 
   
     // تحميل الملاحظات المفضلة عند فتح الصفحة
     const allNotes = useNotesStore((state) => state.notes);

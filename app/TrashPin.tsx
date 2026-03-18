@@ -224,9 +224,8 @@ const styles = StyleSheet.create({
     right: 0,
     left: 0,
     textAlign: 'center',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
-    paddingTop: 22,
   },
   DELALL: {
     position: 'absolute',

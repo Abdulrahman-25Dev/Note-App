@@ -125,7 +125,7 @@ export default function Settings() {
           </View>
 
           <View style={styles.appearanceSection}>
-            <Text style={[styles.sectionTitle, { color: theme.secondary }]}>{t("appearance")}</Text>
+            <Text style={[styles.sectionTitle, { color: theme.secondary, textAlign: isRTL ? 'right' : 'left' }]}>{t("appearance")}</Text>
             <View style={[ styles.optionsContainer, { borderColor: theme.borders, backgroundColor: theme.card }]}>
                <View style={[styles.options, {flexDirection : isRTL ? 'row-reverse' : 'row'}, { backgroundColor: theme.card, borderColor: theme.borders }]}>
                 <Text style={[styles.optionText, { color: theme.primary }]}>{t("theme")}</Text>
@@ -185,7 +185,7 @@ export default function Settings() {
             
           </View>
           <View style={styles.dataManagementSection}> 
-            <Text style={[styles.sectionTitle, { color: theme.secondary, marginRight: 20 }]}>{t("dataManagement")}</Text>
+            <Text style={[styles.sectionTitle, { color: theme.secondary, marginRight: 20, textAlign: isRTL ? 'right' : 'left' }]}>{t("dataManagement")}</Text>
             <View style={[styles.optionsContainer2, { borderColor: theme.borders, backgroundColor: theme.card }]}>
               <View style={[styles.options, {flexDirection : isRTL ? 'row-reverse' : 'row'}]}>
                 <Text style={[styles.optionText, { color: theme.primary }]}>{t("DELALLNotes")}</Text>
@@ -318,7 +318,7 @@ export default function Settings() {
                 <Text style={[styles.optionText, { color: theme.primary }]}>{t("restoreAllTrash")}</Text>
                 <TouchableOpacity
                 onPress={() => setRestoreModal(true)}
-                style={[styles.refreshBtn, { backgroundColor: '#10B981', borderColor: theme.borders }]}
+                style={[styles.refreshBtn, { backgroundColor: '#3B82F6', borderColor: theme.borders }]}
                 >
                   <Ionicons name="refresh" size={24} color={'#fff'} />
                 </TouchableOpacity>
@@ -398,7 +398,7 @@ export default function Settings() {
           </View>
 
           <View style={styles.AboutAppSection}> 
-            <Text style={[styles.sectionTitle, { color: theme.secondary, marginRight: 20 }]}>{t("aboutApp")}</Text>  
+            <Text style={[styles.sectionTitle, { color: theme.secondary, marginRight: 20, textAlign: isRTL ? 'right' : 'left' }]}>{t("aboutApp")}</Text>  
             <View style={[styles.optionsContainer2, { borderColor: theme.borders, backgroundColor: theme.card }]}>
               <View style={[styles.options, {flexDirection : isRTL ? 'row-reverse' : 'row', justifyContent: 'center'}]}>
                 <Pressable onPress={() => router.push('/about')} style={[styles.About, {flexDirection : isRTL ? 'row-reverse' : 'row', borderWidth: 1, borderColor: mainColor}]}>
