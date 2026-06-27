@@ -89,7 +89,7 @@ function AboutScreen() {
         {/* روابط التواصل - اختياري */}
         <TouchableOpacity 
           style={[styles.linkButton, { flexDirection: isRTL ? 'row' : 'row-reverse' }]}
-          onPress={() => Linking.openURL('mailto:dooomww@gmail.com')}
+          onPress={() => Linking.openURL('mailto:abdulrahman.dev25@gmail.com')}
         >
           <Ionicons name="mail-outline" size={20} color="#007AFF" />
           <Text style={styles.linkText}>{t('email')}</Text>
