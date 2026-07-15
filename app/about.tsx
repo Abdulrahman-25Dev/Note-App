@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n/i18n';
+import { router } from 'expo-router';
  
 function AboutScreen() {
   const isRTL = i18n.language === 'ar';
@@ -21,6 +22,9 @@ function AboutScreen() {
   const mainColor = useThemeStore((state) => state.mainColor);
   return (
     <ScrollView style={styles.container}>
+      <TouchableOpacity style={[styles.backButton, { flexDirection: isRTL ? 'row-reverse' : 'row' }]} onPress={() => router.back()}>
+        <Ionicons name="arrow-forward" size={24} color={mainColor} />
+      </TouchableOpacity>
       {/* Logo/Icon */}
       <View style={[styles.header, { backgroundColor: theme.card, }]}>
         <View style={styles.iconContainer}>
@@ -198,15 +202,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#E3F2FD",
   },
   backButton:{
-    flexDirection: 'row-reverse',
     position: 'absolute',
-    gap: 10,
+    top: 60,
     right: 20,
-    top: 40,
-  },
-  backButtonText:{
-    fontSize: 16,
-    fontWeight: '600',
+    zIndex: 10,
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   }
 });
 

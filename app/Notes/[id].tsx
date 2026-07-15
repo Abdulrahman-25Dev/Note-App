@@ -4,12 +4,11 @@ import {
   View,
   TouchableOpacity,
   Modal,
-  ScrollView,
+  TextInput,
 } from "react-native";
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocalSearchParams, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-// import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
 import "dayjs/locale/ar";
@@ -21,10 +20,11 @@ import { useNotesStore } from "../../store/useNotesStore";
 
 dayjs.extend(relativeTime);
 dayjs.locale("ar");
+
 const Details = () => {
   const { t } = useTranslation();
 
-  const { isDarkMode } = useThemeStore();
+  const { isDarkMode, mainColor } = useThemeStore();
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
   const { id } = useLocalSearchParams();
@@ -33,10 +33,34 @@ const Details = () => {
   const [showModal, setShowModal] = useState(false);
 
   const delNote = useNotesStore((state) => state.deleteNote);
+  const updateNote = useNotesStore((state) => state.updateNote);
 
   const note = notes.find((n) => n.id === id);
 
-  const deleteNote = async () => {
+  const [title, setTitle] = useState(note?.title || "");
+  const [content, setContent] = useState(note?.content || "");
+
+  const titleRef = useRef(title);
+  const contentRef = useRef(content);
+  useEffect(() => {
+    titleRef.current = title;
+    contentRef.current = content;
+  });
+
+  useEffect(() => {
+    if (note) {
+      setTitle(note.title);
+      setContent(note.content);
+    }
+  }, [note]);
+
+  useEffect(() => {
+    return () => {
+      updateNote(noteId, { title: titleRef.current, content: contentRef.current });
+    };
+  }, []);
+
+  const deleteNote = () => {
     delNote(noteId);
     router.back();
   };
@@ -47,104 +71,88 @@ const Details = () => {
       style={[styles.container, { backgroundColor: theme.background }]}
     >
       <View style={[styles.header, { backgroundColor: theme.background }]}>
-        <View style={{ flexDirection: "row", gap: 10 }}>
-          <TouchableOpacity
-            style={styles.delete}
-            onPress={() => setShowModal(true)}
-          >
-            <Ionicons
-              name="trash"
-              size={24}
-              color="#fff"
-              style={{ marginRight: 5 }}
-            />
-            <Text style={styles.deleteText}>{t("del")}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.edit}
-            onPress={() => router.push(`/Notes/Edit/${id}`)}
-          >
-            <Ionicons
-              name="pencil"
-              size={24}
-              color="#fff"
-              style={{ marginRight: 5 }}
-            />
-            <Text style={styles.editText}>{t("edit")}</Text>
-          </TouchableOpacity>
-        </View>
-        {/* START MODAL */}
-        <Modal
-          statusBarTranslucent
-          style={styles.modal}
-          animationType="fade"
-          transparent={true}
-          visible={showModal}
-          onRequestClose={() => {
-            setShowModal(!showModal);
-          }}
+
+        <TouchableOpacity
+          style={[styles.delete, { backgroundColor: theme.card }]}
+          onPress={() => setShowModal(true)}
         >
-          <View style={styles.overlay}>
-            <View
-              style={[
-                styles.centeredView,
-                {
-                  backgroundColor: theme.background,
-                  borderColor: theme.borders,
-                },
-              ]}
-            >
-              <Text style={[styles.modalTitle, { color: theme.primary }]}>
-                {t("Are you sure?")}
-              </Text>
-              <Text style={[styles.modalText, { color: theme.primary }]}>
-                {t("Do you want to delete this note?")}
-              </Text>
-              <View style={styles.buttons}>
-                <TouchableOpacity style={styles.delButton} onPress={deleteNote}>
-                  <Text style={styles.delText}>{t("DEL")}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => setShowModal(false)}
-                >
-                  <Text style={styles.cancelText}>{t("CAN")}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-        {/* ==== END MODAL ==== */}
-        <View>
-          <TouchableOpacity style={styles.back} onPress={() => router.back()}>
-            <Text
-              style={{ fontSize: 14, fontWeight: "bold", color: theme.primary }}
-            >
-              {t("back")}
-            </Text>
-            <Ionicons
-              name="arrow-forward"
-              size={20}
-              color={theme.primary}
-              style={{ paddingLeft: 5 }}
-            />
-          </TouchableOpacity>
-        </View>
+          <Ionicons
+            name="trash"
+            size={24}
+            color="#DAA7A4"
+          />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()} style={styles.back}>
+          <Ionicons
+            name="arrow-forward"
+            size={24}
+            color={mainColor}
+          />
+        </TouchableOpacity>
       </View>
 
-      <View style={[styles.content, { backgroundColor: theme.background }]}>
-        <Text style={[styles.title, { color: theme.primary }]}>
-          {note?.title}
-        </Text>
+      <Modal
+        statusBarTranslucent
+        style={styles.modal}
+        animationType="fade"
+        transparent={true}
+        visible={showModal}
+        onRequestClose={() => {
+          setShowModal(!showModal);
+        }}
+      >
+        <View style={styles.overlay}>
+          <View
+            style={[
+              styles.centeredView,
+              {
+                backgroundColor: theme.background,
+                borderColor: theme.borders,
+              },
+            ]}
+          >
+            <Text style={[styles.modalTitle, { color: theme.primary }]}>
+              {t("Are you sure?")}
+            </Text>
+            <Text style={[styles.modalText, { color: theme.primary }]}>
+              {t("Do you want to delete this note?")}
+            </Text>
+            <View style={styles.buttons}>
+              <TouchableOpacity style={styles.delButton} onPress={deleteNote}>
+                <Text style={styles.delText}>{t("DEL")}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setShowModal(false)}
+              >
+                <Text style={styles.cancelText}>{t("CAN")}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <View style={styles.body}>
+        <TextInput
+          style={[styles.title, { color: theme.primary }]}
+          value={title}
+          onChangeText={setTitle}
+          placeholderTextColor={theme.secondary}
+          placeholder="..."
+        />
         <View style={styles.line} />
         <Text style={[styles.date, { color: theme.primary }]}>
           {dayjs(note?.createdAt).format("DD MMMM YYYY - hh:mm A")}
         </Text>
-        <ScrollView>
-          <Text style={[styles.contentText, { color: theme.primary }]}>
-            {note?.content}
-          </Text>
-        </ScrollView>
+        <TextInput
+          style={[styles.contentText, { color: theme.primary }]}
+          value={content}
+          onChangeText={setContent}
+          placeholderTextColor={theme.secondary}
+          placeholder="..."
+          multiline
+          textAlignVertical="top"
+        />
       </View>
     </SafeAreaView>
   );
@@ -163,46 +171,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 19,
     paddingVertical: 22,
   },
-  delete: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#DC2720",
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  deleteText: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  edit: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#3B82F6",
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  editText: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#fff",
-  },
   back: {
-    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
-  content: {
+  delete: {
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+    width: 44,
+    height: 44,
+  },
+  body: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#eee",
   },
   line: {
     height: 1,
@@ -214,6 +199,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
     textAlign: "right",
+    padding: 0,
   },
   date: {
     fontSize: 14,
@@ -224,6 +210,7 @@ const styles = StyleSheet.create({
   contentText: {
     fontSize: 16,
     textAlign: "right",
+    padding: 0,
   },
   modal: {
     flex: 1,
