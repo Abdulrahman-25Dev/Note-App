@@ -22,8 +22,8 @@ import * as Clipboard from "expo-clipboard";
 import { useThemeStore } from "../store/useThemeStore";
 import { Colors } from "../Constants/Colors";
 import { useTranslation } from "react-i18next";
+import SharedModal from "../components/sharedModal";
 import { useNotesStore } from "../store/useNotesStore";
-// import SharedModal from "../components/sharedModal";
 
 export default function Index() {
   useEffect(() => {
@@ -86,6 +86,15 @@ export default function Index() {
   };
 
   const { t } = useTranslation();
+  const deleteAllNotes = useNotesStore((state) => state.deleteAllNotes);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const handleDeleteAllNotes = () => {
+    deleteAllNotes();
+    setShowDeleteModal(false);
+    router.push("/");
+  };
+
   const Drawer = () => {
     const isActive = (tab: string) => currentTab === tab;
     return (
@@ -188,9 +197,10 @@ export default function Index() {
       <SafeAreaView edges={["top"]} style={styles.container}>
         <View style={styles.header}>
           <Pressable
-            style={[styles.trashButton, { backgroundColor: theme.card }]}
+            onPress={() => setShowDeleteModal(true)}
+            style={[styles.headerActionButton, { backgroundColor: theme.card }]}
           >
-            <Ionicons name="trash" size={24} color={"#EE8A8A"} />
+            <Ionicons name="trash" size={22} color={"#DAA7A3"} />
           </Pressable>
           <Text style={[styles.headerTitle, { color: theme.primary }]}>
             {t("myNotes")}{" "}
@@ -307,36 +317,32 @@ export default function Index() {
             <Ionicons name="add" size={32} color="#fff" />
           </TouchableOpacity>
         </View>
-        {/* <Delete All Deleted Notes Modal /> */}
-        {/* <SharedModal
-          visible={trashModal}
-          onRequestClose={() => setTrashModal(false)}
+        <SharedModal
+          visible={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onRequestClose={() => setShowDeleteModal(false)}
         >
           <View
             style={[styles.modalContainer, { backgroundColor: theme.card }]}
           >
             <Text style={[styles.titleModal, { color: theme.primary }]}>
-              {t("DELALLTrash")}
+              {t("DELALLNotes")}
             </Text>
             <Text style={[styles.textModal, { color: theme.primary }]}>
-              {t("sureDELALLTrash")}
+              {t("sureDELAllNotes")}
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.DELBtn, { backgroundColor: "#DC2626" }]}
-                onPress={() => {
-                  deleteAllTrash();
-                  setTrashModal(false);
-                  router.push("/TrashPin");
-                }}
+                style={[styles.modalDeleteBtn, { backgroundColor: "#DC2626" }]}
+                onPress={handleDeleteAllNotes}
               >
                 <Text style={{ color: "#ffffff", fontWeight: "bold" }}>
                   {t("DEL")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.CancelBtn, { backgroundColor: "#3B82F6" }]}
-                onPress={() => setTrashModal(false)}
+                style={[styles.modalCancelBtn, { backgroundColor: "#3B82F6" }]}
+                onPress={() => setShowDeleteModal(false)}
               >
                 <Text style={{ color: "#fff", fontWeight: "bold" }}>
                   {t("CAN")}
@@ -344,7 +350,7 @@ export default function Index() {
               </TouchableOpacity>
             </View>
           </View>
-        </SharedModal> */}
+        </SharedModal>
       </SafeAreaView>
       {drawerOpen && (
         <TouchableOpacity style={styles.overlay} onPress={toggleDrawer} />
@@ -370,9 +376,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  trashButton: {
-    padding: 5,
-    borderRadius: 10,
+  headerActionButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
   delete: {
     justifyContent: "center",
@@ -460,6 +469,44 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 20,
     color: "#333",
+  },
+  modalContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+    padding: 20,
+    width: "85%",
+  },
+  titleModal: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  textModal: {
+    fontSize: 16,
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 8,
+    gap: 12,
+  },
+  modalDeleteBtn: {
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  modalCancelBtn: {
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
   },
   menuButton: {
     marginRight: 5,

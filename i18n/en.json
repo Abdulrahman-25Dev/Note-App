@@ -28,7 +28,7 @@
     "theme": "Theme",
     "language": "Language",
     "appColor": "App Color",
-    "dataManagement": "Account Management",
+    "AccountManagement": "Account Management",
     "ResetApp": "Reset App",
     "DELALLNotes": "Delete All Notes",
     "sureDELAllNotes": "Are you sure you want to remove all notes?",
