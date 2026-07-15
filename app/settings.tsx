@@ -115,7 +115,7 @@ export default function Settings() {
         <View style={[styles.content, { backgroundColor: theme.background }]}>
           <View style={[styles.profileImage, { backgroundColor: theme.background }]}>
             <Image
-            source={require('@/assets/images/shadow.png')}
+            source={require('@/assets/images/user.png')}
             style={[styles.Image, { borderColor: mainColor }]}
             />
             <View style={styles.profileInfo}>
@@ -456,8 +456,9 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   Image: {
-    width: 80,
-    height: 80,
+    width: 70,
+    height: 70,
+    backgroundColor: '#fff',
     marginBottom: 20,
     borderRadius: 50,
     marginTop: 30,
@@ -691,11 +692,13 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginHorizontal: 10
   },
-  About:{
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 10,
-    borderRadius: 5,
-    marginHorizontal: 10,
-  }
+  About: {
+  justifyContent: 'center',
+  alignItems: 'center',
+  paddingVertical: 12,       // مسافة عمودية مريحة
+  paddingHorizontal: 24,     // مسافة أفقية تعطي الزر عرض مناسب
+  borderRadius: 12,          // حواف دائرية ناعمة وعصرية (بدل 5 القاسية)
+  marginHorizontal: 20,      // هوامش أفقية أوسع عشان ما يمتد لأطراف الشاشة
+  borderWidth: 1.5,          // خط الحدود
+}
 });
