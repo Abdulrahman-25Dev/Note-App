@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export type ColorKey = 'teal' | 'purple' | 'green' | 'yellow' | 'rose';
 // 2. تعريف الألوان الثابتة (نفس الدرجات التي اخترناها سابقاً)
 export const themeColors: Record<ColorKey, string> = {
-  teal: '#007A8C',
+  teal: '#00B4D8',
   purple: '#8B5CF6',
   green: '#10B981',
   yellow: '#F59E0B',

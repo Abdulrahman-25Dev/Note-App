@@ -2,7 +2,7 @@ import { Text, View, StyleSheet, TouchableOpacity, Animated, Dimensions, Image, 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useSegments } from "expo-router";
 import { useRef, useState } from 'react';
-import { Ionicons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { Switch } from "react-native-paper";
 import { useThemeStore } from "../store/useThemeStore";
 import { Colors } from "../Constants/Colors";
@@ -58,7 +58,7 @@ export default function Settings() {
   });
 
   const colorsOptions = [
-    { id: 'teal', hex: '#007A8C', name: 'أزرق مخضر' },
+    { id: 'teal', hex: '#00B4D8', name: 'أزرق مخضر' },
     { id: 'purple', hex: '#8B5CF6', name: 'أرجواني' },
     { id: 'green', hex: '#10B981', name: 'أخضر' },
     { id: 'yellow', hex: '#F59E0B', name: 'أصفر' },
@@ -115,7 +115,7 @@ export default function Settings() {
         <View style={[styles.content, { backgroundColor: theme.background }]}>
           <View style={[styles.profileImage, { backgroundColor: theme.background }]}>
             <Image
-            source={require('@/assets/images/user.png')}
+            source={require('../assets/images/user.png')}
             style={[styles.Image, { borderColor: mainColor }]}
             />
             <View style={styles.profileInfo}>
@@ -127,11 +127,11 @@ export default function Settings() {
           <View style={styles.appearanceSection}>
             <Text style={[styles.sectionTitle, { color: theme.secondary, textAlign: isRTL ? 'right' : 'left' }]}>{t("appearance")}</Text>
             <View style={[ styles.optionsContainer, { borderColor: theme.borders, backgroundColor: theme.card }]}>
-               <View style={[styles.options, {flexDirection : isRTL ? 'row-reverse' : 'row'}, { backgroundColor: theme.card, borderColor: theme.borders }]}>
+               <View style={[styles.options, {flexDirection : isRTL ? 'row-reverse' : 'row'}, { backgroundColor: theme.card, borderColor: theme.borders, borderRadius: 30 }]}>
                 <Text style={[styles.optionText, { color: theme.primary }]}>{t("theme")}</Text>
               <Switch
                 style={styles.switch}
-                trackColor={{ false: '#767577', true: theme.primary }}
+                trackColor={{ false: '#767577', true: mainColor }}
                 thumbColor={isDarkMode ? theme.primary : '#f4f3f4'}
                 value={isDarkMode}
                 onValueChange={toggleDarkMode} // عند الضغط، يغير الوضع الليلي في الـ store
@@ -400,12 +400,12 @@ export default function Settings() {
           <View style={styles.AboutAppSection}> 
             <Text style={[styles.sectionTitle, { color: theme.secondary, marginRight: 20, textAlign: isRTL ? 'right' : 'left' }]}>{t("aboutApp")}</Text>  
             <View style={[styles.optionsContainer2, { borderColor: theme.borders, backgroundColor: theme.card }]}>
-              <View style={[styles.options, {flexDirection : isRTL ? 'row-reverse' : 'row', justifyContent: 'center'}]}>
-                <Pressable onPress={() => router.push('/about')} style={[styles.About, {flexDirection : isRTL ? 'row-reverse' : 'row', borderWidth: 1, borderColor: mainColor}]}>
-                  <Text style={[styles.optionText, { color: theme.primary }]}>{t("aboutApp")}</Text>
-                </Pressable>
-
-              </View>
+              <Pressable 
+              onPress={() => router.push('./about')}
+              style={[styles.options, {flexDirection : isRTL ? 'row-reverse' : 'row'}]}>
+                <Text style={[styles.optionText, { color: theme.primary }]}>{t("aboutApp")}</Text>
+                <Feather name="info" size={24} color={mainColor} />
+              </Pressable>
               
             </View>           
           </View>
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     right: 20,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 15,
     color: '#999',
@@ -495,27 +495,40 @@ const styles = StyleSheet.create({
   },
   optionsContainer: {
     paddingHorizontal: 10,
-    borderRadius: 8,
+    borderRadius: 30,
     borderWidth: 1,
   },
   optionsContainer2:{
     paddingHorizontal: 10,
-    borderRadius: 8,
+    borderRadius: 30,
     borderWidth: 1,
   },
   options: {
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-    paddingVertical: 10,
-  },
+  // 1. تحديد الحجم والتموضع
+  width: '92%', // يطابق نفس عرض الكرت اللي فوقه بالتمام
+  alignSelf: 'center',
+  
+  // 2. المسافات الداخلية الفخمة (الـ Padding)
+  paddingVertical: 16,     // تعطي ارتفاع مريح للزر عند الضغط
+  
+  // 3. الخلفية والحواف (سر التناسق بصرياً مع مقادير)
+  borderRadius: 16,          // حواف دائرية ناعمة متطابقة مع الكرت العلوي
+  
+  // 4. ترتيب محاذاة العناصر داخل الزر
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  
+  // 5. ظل خفيف لإعطاء لمسة فخامة
+  
+},
   optionText: {
-    fontSize: 16,
-    paddingHorizontal: 10,
-  },
+  fontSize: 16,
+  fontWeight: '600',
+  // إذا كان لديك fontFamily مخصص للخط العربي أضفه هنا
+},
   colorsRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
   colorCircle: {
     width: 25,

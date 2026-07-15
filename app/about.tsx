@@ -18,12 +18,13 @@ function AboutScreen() {
   const { t } = useTranslation();
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const theme = isDarkMode ? Colors.dark : Colors.light;
+  const mainColor = useThemeStore((state) => state.mainColor);
   return (
     <ScrollView style={styles.container}>
       {/* Logo/Icon */}
       <View style={[styles.header, { backgroundColor: theme.card, }]}>
         <View style={styles.iconContainer}>
-          <Ionicons name="book-outline" size={40} color={'#4CAF50'} />
+          <Ionicons name="book-outline" size={40} color={mainColor} />
         </View>
         <Text style={[styles.appName, { color: theme.primary }]}>{t('appName')} </Text>
         <Text style={[styles.version, { color: theme.primary }]}>{t('version')}</Text>

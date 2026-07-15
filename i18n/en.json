@@ -28,7 +28,7 @@
     "theme": "Theme",
     "language": "Language",
     "appColor": "App Color",
-    "dataManagement": "Data Management",
+    "dataManagement": "Account Management",
     "ResetApp": "Reset App",
     "DELALLNotes": "Delete All Notes",
     "sureDELAllNotes": "Are you sure you want to remove all notes?",
@@ -41,7 +41,7 @@
     "sureRestoreAllTrash":"Are you sure you want to restore all deleted notes?",
     "Logout": "Logout",
     "sureLogout": "Are you sure you want to log out?",
-    "aboutApp": "About the app",
+    "aboutApp": "About app",
 
 
     
