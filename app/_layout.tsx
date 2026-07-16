@@ -15,8 +15,8 @@ export default function RootLayout() {
   useEffect(() => {
     const check = async () => {
       const done = await AsyncStorage.getItem("onboarding");
-      if (!done) {
-        router.replace("./onboarding/step1");
+      if (done) {
+        router.replace("./Onboarding");
       } else {
         router.replace("/");
       };
