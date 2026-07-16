@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native'
 import { useState } from 'react'
 import { TextInput } from 'react-native-paper'
 import { router } from 'expo-router'
-import { LinearGradient } from 'expo-linear-gradient'
+
 const Signup = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -20,221 +20,300 @@ const Signup = () => {
       return;
     } else if (password.length < 6) {
       setError('كلمة المرور يجب ان تكون على الاقل 6 حروف');
+      return;
     }
       
-    else {
-      console.log('Signup successful!');
-      router.replace('/');
-    }
+    console.log('Signup successful!');
+    router.replace('/');
   }
+
   return (
-      <View style={styles.container}>
-        <LinearGradient
-         colors={['#A5D8FF', '#4BA3FF']}
-         style={styles.background}
-         start={{ x: 0, y: 1 }}
-         end={{ x: 1, y: 0 }}
-         />
-        <Text style={styles.title}>إنشاء حساب </Text>
-        
-        <View style={styles.inputContainer}>
-          <TextInput
-            label='البريد الالكتروني'
-            value={email}
-            keyboardType='email-address'
-            onChangeText={(text) => setEmail(text)}
-            style={styles.input}
-            mode='outlined'
-            activeOutlineColor='#000'
-            theme={{roundness: 12}}
-            placeholder='example@gmail.com'
-            right={
-              <TextInput.Icon
-                icon='email'
-              />
+    <View style={styles.container}>
+      {/* شعار ريشة المتوهج بالأعلى لتعزيز ثراء الواجهة بصرية
+      <Image 
+        source={require("@/assets/images/icon.png")}
+        style={styles.logo}
+        resizeMode="contain"
+      /> */}
+
+      <Text style={styles.title}>إنشاء حساب جديد</Text>
+      <Text style={styles.subtitle}>انضم إلى عالم ريشة الذكي والآمن</Text>
+      
+      <View style={styles.inputContainer}>
+        {/* حقل البريد الإلكتروني */}
+        <TextInput
+          label='البريد الالكتروني'
+          value={email}
+          keyboardType='email-address'
+          onChangeText={(text) => {
+            setEmail(text);
+            if(error) setError('');
+          }}
+          style={styles.input}
+          mode='outlined'
+          activeOutlineColor='#00B4D8' // لون الـ Teal عند التفاعل
+          outlineColor='#1E293B' // حدود رمادية داكنة تندمج مع الخلفية
+          textColor='#F8FAFC'
+          placeholderTextColor='#64748B'
+          theme={{
+            roundness: 14,
+            colors: { 
+              onSurfaceVariant: '#64748B',
+              background: '#0F172A'
             }
+          }}
+          placeholder='example@gmail.com'
+          right={
+            <TextInput.Icon
+              icon='email'
+              color='#64748B'
+            />
+          }
+        />
+
+        {/* حقل كلمة المرور */}
+        <TextInput
+          label='كلمة المرور'
+          value={password}
+          onChangeText={(text) => {
+            setPassword(text);
+            if(error) setError('');
+          }}
+          secureTextEntry={!showPassword1}
+          style={styles.input}
+          mode='outlined'
+          activeOutlineColor='#00B4D8'
+          outlineColor='#1E293B'
+          textColor='#F8FAFC'
+          placeholderTextColor='#64748B'
+          theme={{
+            roundness: 14,
+            colors: { 
+              onSurfaceVariant: '#64748B',
+              background: '#0F172A'
+            }
+          }}
+          placeholder='••••••••'
+          right={
+            <TextInput.Icon
+              icon={showPassword1 ? 'eye-off' : 'eye'}
+              color='#64748B'
+              onPress={() => setShowPassword1(!showPassword1)}
+            />
+          }
+        />
+
+        {/* حقل تأكيد كلمة المرور */}
+        <TextInput
+          label='تاكيد كلمة المرور'
+          value={confirmPassword}
+          onChangeText={(text) => {
+            setConfirmPassword(text);
+            if(error) setError('');
+          }}
+          secureTextEntry={!showPassword2}
+          style={styles.input}
+          mode='outlined'
+          activeOutlineColor='#00B4D8'
+          outlineColor='#1E293B'
+          textColor='#F8FAFC'
+          placeholderTextColor='#64748B'
+          theme={{
+            roundness: 14,
+            colors: { 
+              onSurfaceVariant: '#64748B',
+              background: '#0F172A'
+            }
+          }}
+          placeholder='••••••••'
+          right={
+            <TextInput.Icon
+              icon={showPassword2 ? 'eye-off' : 'eye'}
+              color='#64748B'
+              onPress={() => setShowPassword2(!showPassword2)}
+            />
+          }
+        />
+      </View>
             
-          />
-          <TextInput
-            label='كلمة المرور'
-            value={password}
-            onChangeText={(text) => setPassword(text)}
-            secureTextEntry={!showPassword1}
-            style={styles.input}
-            mode='outlined'
-            activeOutlineColor='#000'
-            theme={{ roundness: 12 }}
-            placeholder='password'
-            right={
-              <TextInput.Icon
-                icon={showPassword1 ? 'eye-off' : 'eye'}
-                onPress={() => setShowPassword1(!showPassword1)}
-              />
-            }
-          />
-          <TextInput
-            label='تاكيد كلمة المرور'
-            value={confirmPassword}
-            onChangeText={(text) => setConfirmPassword(text)}
-            secureTextEntry={!showPassword2}
-            style={styles.input}
-            mode='outlined'
-            activeOutlineColor='#000'
-            theme={{roundness: 12}}
-            placeholder='password again'
-            right={
-              <TextInput.Icon
-                icon={showPassword2 ? 'eye-off' : 'eye'}
-                onPress={() => setShowPassword2(!showPassword2)}
-              />
-            }
-          />
-          
-        </View>
-              
-        {error && <Text style={{ color: 'red' }}>{error}</Text>}
-        
-        <TouchableOpacity style={styles.Signup} onPress={handleSignup}>
-          <Image
-            source={require("@/assets/images/signup.png")}
-            style={{ width: 20, height: 20, marginRight: 10 }}
-            tintColor={'white'}
-          />
-          <Text style={styles.SignupText}>إنشاء حساب</Text>
-        </TouchableOpacity>
+      {error && <Text style={styles.errorText}>{error}</Text>}
+      
+      {/* زر تسجيل حساب جديد */}
+      <TouchableOpacity style={styles.SignupBtn} onPress={handleSignup}>
+        <Image
+          source={require("@/assets/images/signup.png")}
+          style={styles.btnIcon}
+        />
+        <Text style={styles.SignupText}>إنشاء حساب</Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.replace('/Auth/Login')} style={styles.backLogin}>
-          <Text style={styles.backLoginText}>لديك حساب بالفعل ؟</Text>
-        </TouchableOpacity>
+      {/* الانتقال لصفحة تسجيل الدخول */}
+      <TouchableOpacity onPress={() => router.replace('/Auth/Login')} style={styles.backLogin}>
+        <Text style={styles.backLoginText}>لديك حساب بالفعل؟ تسجيل الدخول</Text>
+      </TouchableOpacity>
 
-        <View style={styles.OrContainer}>
-          <View style={styles.OrLine}></View>
-          <Text style={styles.OrText}>او</Text>
-          <View style={styles.OrLine}></View>
-        </View>
+      {/* الخط الفاصل الفاخر */}
+      <View style={styles.OrContainer}>
+        <View style={styles.OrLine}></View>
+        <Text style={styles.OrText}>أو</Text>
+        <View style={styles.OrLine}></View>
+      </View>
 
-        <TouchableOpacity
-                style={styles.icons}
-                >
+      {/* أزرار التواصل الاجتماعي */}
+      <View style={styles.socialContainer}>
+        <TouchableOpacity style={styles.socialBtn}>
           <Image
             source={require("@/assets/images/google.png")}
-            style={{ width: 30, height: 30, marginRight: 10 }}
-            />
-            <Text style={styles.iconText}>المتابعة بواسطة Google</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.icons}>
-            <Image
+            style={styles.socialIcon}
+          />
+          <Text style={styles.socialText}>المتابعة بواسطة Google</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.socialBtn}>
+          <Image
             source={require("@/assets/images/facebook.png")}
-            style={{ width: 30, height: 30, marginRight: 10 }}
-            />
-            <Text style={styles.iconText}>المتابعة بواسطة Facebook</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.icons}>
-            <Image
-              source={require("@/assets/images/twitter.png")}
-              style={{ width: 30, height: 30, marginRight: 10 }}
-            />
-            <Text style={styles.iconText}>المتابعة بواسطة Twitter/X</Text>
-          </TouchableOpacity>
+            style={styles.socialIcon}
+          />
+          <Text style={styles.socialText}>المتابعة بواسطة Facebook</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.socialBtn}>
+          <Image
+            source={require("@/assets/images/twitter.png")}
+            style={styles.socialIcon}
+          />
+          <Text style={styles.socialText}>المتابعة بواسطة Twitter/X</Text>
+        </TouchableOpacity>
       </View>
+    </View>
   )
 }
 
 export default Signup;
 
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      
-    },
-    background:{
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        top: 0,
-        height: '100%'
-    },
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#020617', // تطابق كامل مع خلفية شاشة الدخول الداكنة الفخمة
+    paddingHorizontal: 20,
+  },
+  logo: {
+    width: 70,
+    height: 70,
+    marginBottom: 12,
+    shadowColor: '#00B4D8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+  },
   title: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      marginBottom: 10,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#F8FAFC',
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 13,
+    marginBottom: 20,
+    color: '#64748B',
+    fontWeight: '500',
   },
   inputContainer: {
-    alignItems: 'flex-start',
-    marginBottom: 10,
+    width: '100%',
+    maxWidth: 320,
+    alignItems: 'center',
+    marginBottom: 8,
   },
   input: {
-    width: 300,
-    backgroundColor: '#EFEFEF',
-    textAlign: 'left',
+    width: '100%',
+    marginBottom: 10,
   },
-  old: {
-      flexDirection:'row',
-      width: 300,
-      alignItems: 'center',
-      borderRadius: 20,
-      justifyContent: 'center',
-      backgroundColor: '#A7C7FF',
-      padding: 5
+  errorText: {
+    color: '#EF4444',
+    fontSize: 12,
+    alignSelf: 'center',
+    marginBottom: 8,
+    fontWeight: '500',
   },
-  Signup: {
-      flexDirection:'row',
-      width: 300,
-      alignItems: 'center',
-    borderRadius: 20,
-      marginVertical: 10,
-      justifyContent: 'center',
-      backgroundColor: '#3A7BD5',
-      padding: 5
+  SignupBtn: {
+    flexDirection: 'row',
+    width: '100%',
+    maxWidth: 320,
+    height: 50,
+    alignItems: 'center',
+    borderRadius: 14,
+    justifyContent: 'center',
+    backgroundColor: '#00B4D8', // اللون المعتمد (Teal)
+    marginTop: 6,
+    shadowColor: '#00B4D8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
-   SignupText: {
-    fontSize: 16,
-      color: '#fff',
-     textAlign: 'center',
-      padding: 5
+  btnIcon: {
+    width: 18,
+    height: 18,
+    marginRight: 8,
+    tintColor: '#020617',
+  },
+  SignupText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#020617',
   },
   backLogin: {
-      width: 300,
-      alignItems: 'center',
-      borderRadius: 20,
-      justifyContent: 'center',
-      padding: 5
+    marginTop: 12,
+    padding: 5,
   },
   backLoginText: {
-    fontSize: 16,
-     textAlign: 'center',
-      padding: 5
+    fontSize: 13,
+    color: '#00B4D8',
+    fontWeight: '600',
   },
   OrContainer: {
-     flexDirection: "row",
+    flexDirection: "row",
     alignItems: "center",
-    marginVertical: 10
+    marginVertical: 18,
+    width: '100%',
+    maxWidth: 320,
   },
   OrLine: {
     flex: 1,
-    height: 2,
-    backgroundColor: "#333"
+    height: 1,
+    backgroundColor: "#1E293B",
   },
   OrText: {
-    marginHorizontal: 8,
-    color: "#333",
-    fontSize: 16
+    marginHorizontal: 12,
+    color: "#475569",
+    fontSize: 14,
+    fontWeight: '600',
   },
-  icons: {
+  socialContainer: {
+    width: '100%',
+    maxWidth: 320,
+  },
+  socialBtn: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "center",
     marginBottom: 10,
-    width: 300,
-    gap: 10,
-    backgroundColor: "#FFFFFF",
-    padding: 10,
-    borderRadius: 10
+    width: '100%',
+    height: 48,
+    backgroundColor: "#0F172A",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#1E293B',
   },
-  iconText: {
-    fontSize: 16,
-    justifyContent: "center"
+  socialIcon: {
+    width: 22,
+    height: 22,
+    marginRight: 12,
+  },
+  socialText: {
+    fontSize: 14,
+    color: '#E2E8F0',
+    fontWeight: '600',
   }
 })

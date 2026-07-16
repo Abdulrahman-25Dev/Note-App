@@ -32,8 +32,8 @@ export const useThemeStore = create<ThemeState>()(
     (set) => ({
       // القيم الافتراضية
       mainColor: themeColors.rose,
-      colorKey: 'rose',
-      isDarkMode: false,
+      colorKey: 'teal',
+      isDarkMode: true,
       Language: 'ar',
       // تغيير اللغة
       setLanguage: (lang) => 

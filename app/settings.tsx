@@ -365,6 +365,77 @@ export default function Settings() {
                   ]}
                 >
                   <Text style={[styles.optionText, { color: theme.primary }]}>
+                    {t("editProfile")}
+                  </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.DeleteBtn,
+                      { backgroundColor: theme.card, borderColor: mainColor },
+                    ]}
+                  >
+                    <Ionicons
+                      name="person-outline"
+                      size={24}
+                      color={mainColor}
+                    />
+                  </TouchableOpacity>
+                </View>
+                <View
+                  style={[styles.Line, { backgroundColor: theme.borders }]}
+                />
+                <View
+                  style={[
+                    styles.options,
+                    { flexDirection: isRTL ? "row-reverse" : "row" },
+                  ]}
+                >
+                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                    {t("changePassword")}
+                  </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.DeleteBtn,
+                      { backgroundColor: theme.card, borderColor: mainColor },
+                    ]}
+                  >
+                    <Ionicons
+                      name="lock-closed-outline"
+                      size={24}
+                      color={mainColor}
+                    />
+                  </TouchableOpacity>
+                </View>
+                <View
+                  style={[styles.Line, { backgroundColor: theme.borders }]}
+                />
+                <View
+                  style={[
+                    styles.options,
+                    { flexDirection: isRTL ? "row-reverse" : "row" },
+                  ]}
+                >
+                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                    {t("deleteAccount")}
+                  </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.DeleteBtn,
+                      { backgroundColor: "red", borderColor: theme.borders },
+                    ]}
+                  >
+                    <Ionicons name="trash-outline" size={24} color={"white"} />
+                  </TouchableOpacity>
+                </View>
+                <View
+                  style={[styles.Line, { backgroundColor: theme.borders }]}
+                />
+                <View
+                  style={[
+                    styles.options,
+                    { flexDirection: isRTL ? "row-reverse" : "row" },
+                  ]}
+                >
+                  <Text style={[styles.optionText, { color: theme.primary }]}>
                     {t("Logout")}
                   </Text>
                   <TouchableOpacity

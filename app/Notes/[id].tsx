@@ -5,6 +5,9 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useEffect, useState, useRef } from "react";
 import { useLocalSearchParams, router } from "expo-router";
@@ -70,26 +73,59 @@ const Details = () => {
       edges={["top"]}
       style={[styles.container, { backgroundColor: theme.background }]}
     >
-      <View style={[styles.header, { backgroundColor: theme.background }]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={[styles.header, { backgroundColor: theme.background }]}>
 
-        <TouchableOpacity
-          style={[styles.delete, { backgroundColor: theme.card }]}
-          onPress={() => setShowModal(true)}
-        >
-          <Ionicons
-            name="trash"
-            size={24}
-            color="#DAA7A4"
+          <TouchableOpacity
+            style={[styles.delete, { backgroundColor: theme.card }]}
+            onPress={() => setShowModal(true)}
+          >
+            <Ionicons
+              name="trash"
+              size={24}
+              color="#DAA7A4"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.back()} style={styles.back}>
+            <Ionicons
+              name="arrow-forward"
+              size={24}
+              color={mainColor}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={[styles.body, { backgroundColor: theme.background }]}>
+          <TextInput
+            style={[styles.title, { color: theme.primary }]}
+            value={title}
+            onChangeText={setTitle}
+            placeholderTextColor={theme.secondary}
+            placeholder="..."
           />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.back()} style={styles.back}>
-          <Ionicons
-            name="arrow-forward"
-            size={24}
-            color={mainColor}
-          />
-        </TouchableOpacity>
-      </View>
+          <View style={styles.line} />
+          <Text style={[styles.date, { color: theme.primary }]}>
+            {dayjs(note?.createdAt).format("DD MMMM YYYY - hh:mm A")}
+          </Text>
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            <TextInput
+              style={[styles.contentText, { color: theme.primary }]}
+              value={content}
+              onChangeText={setContent}
+              placeholderTextColor={theme.secondary}
+              placeholder="..."
+              multiline
+              textAlignVertical="top"
+            />
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
 
       <Modal
         statusBarTranslucent
@@ -131,29 +167,6 @@ const Details = () => {
           </View>
         </View>
       </Modal>
-
-      <View style={styles.body}>
-        <TextInput
-          style={[styles.title, { color: theme.primary }]}
-          value={title}
-          onChangeText={setTitle}
-          placeholderTextColor={theme.secondary}
-          placeholder="..."
-        />
-        <View style={styles.line} />
-        <Text style={[styles.date, { color: theme.primary }]}>
-          {dayjs(note?.createdAt).format("DD MMMM YYYY - hh:mm A")}
-        </Text>
-        <TextInput
-          style={[styles.contentText, { color: theme.primary }]}
-          value={content}
-          onChangeText={setContent}
-          placeholderTextColor={theme.secondary}
-          placeholder="..."
-          multiline
-          textAlignVertical="top"
-        />
-      </View>
     </SafeAreaView>
   );
 };
@@ -198,7 +211,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 10,
-    textAlign: "right",
     padding: 0,
   },
   date: {
@@ -209,7 +221,6 @@ const styles = StyleSheet.create({
   },
   contentText: {
     fontSize: 16,
-    textAlign: "right",
     padding: 0,
   },
   modal: {

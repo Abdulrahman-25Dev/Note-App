@@ -1,5 +1,5 @@
 // Add Notes screen 
-import { StyleSheet, Text, TouchableOpacity, View, TextInput } from 'react-native'
+import { StyleSheet, Text, TouchableOpacity, View, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native'
 import {useState, useRef, useEffect} from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
@@ -33,40 +33,50 @@ const Add = () => {
   }
     return (
       <SafeAreaView style={[styles.container, {backgroundColor: theme.background}]}>
-        <View style={[styles.header, {backgroundColor: theme.background}]}>
-          <TouchableOpacity style={styles.SaveCon} onPress={handleSave}>
-            <Ionicons name="save" size={20} color="#fff" />
-            <Text style={styles.Save}>{t('save')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.BackCon} onPress={() => router.back()}>
-            <Text style={[styles.Back, {color: theme.primary}]}>{t('back')}</Text>
-            <Ionicons name="arrow-forward" size={20} color={theme.primary}
-              style={{paddingLeft: 5}}
-             />
-          </TouchableOpacity>
-        </View>
-        {/* END HEADER */}
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={[styles.header, {backgroundColor: theme.background}]}>
+            <TouchableOpacity style={styles.SaveCon} onPress={handleSave}>
+              <Ionicons name="save" size={20} color="#fff" />
+              <Text style={styles.Save}>{t('save')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.BackCon} onPress={() => router.back()}>
+              <Text style={[styles.Back, {color: theme.primary}]}>{t('back')}</Text>
+              <Ionicons name="arrow-forward" size={20} color={theme.primary}
+                style={{paddingLeft: 5}}
+               />
+            </TouchableOpacity>
+          </View>
+          {/* END HEADER */}
 
-        {/* START BODY  */}
-        <View style={[styles.Add, {backgroundColor: theme.background}]}>
-          <TextInput
-            ref={titleRef}
-            value={title}
-            onChangeText={setTitle}
-            placeholderTextColor={'gray'}
-            placeholder={t('title1')}
-            style={[styles.inputTitle, {color: theme.primary}]}
-          />
-          <View style={styles.line} />
-          <TextInput
-            value={content}
-            onChangeText={setContent}
-            placeholderTextColor={'gray'}
-            placeholder={t('content')}
-            multiline
-            style={[styles.inputContent, {color: theme.primary}]}
-          />
-        </View>
+          {/* START BODY  */}
+          <View style={[styles.Add, {backgroundColor: theme.background}]}>
+            <TextInput
+              ref={titleRef}
+              value={title}
+              onChangeText={setTitle}
+              placeholderTextColor={'gray'}
+              placeholder={t('title1')}
+              style={[styles.inputTitle, {color: theme.primary}]}
+            />
+            <View style={styles.line} />
+            <ScrollView
+              contentContainerStyle={{ flexGrow: 1 }}
+              keyboardShouldPersistTaps="handled"
+            >
+              <TextInput
+                value={content}
+                onChangeText={setContent}
+                placeholderTextColor={'gray'}
+                placeholder={t('content')}
+                multiline
+                style={[styles.inputContent, {color: theme.primary}]}
+              />
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     
     )
