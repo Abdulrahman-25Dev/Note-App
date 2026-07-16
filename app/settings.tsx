@@ -11,15 +11,17 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useSegments } from "expo-router";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { Switch } from "react-native-paper";
 import { useThemeStore } from "../store/useThemeStore";
 import { Colors } from "../Constants/Colors";
 import { useTranslation } from "react-i18next";
 import SharedModal from "../components/sharedModal";
+import { useAuthStore } from "../store/useAuthStore";
 
 export default function Settings() {
+  const session = useAuthStore((state) => state.session);
   const { t, i18n } = useTranslation();
   const { isDarkMode, toggleDarkMode, setMainColor } = useThemeStore();
   const mainColor = useThemeStore((state) => state.mainColor);
@@ -34,6 +36,10 @@ export default function Settings() {
 
   // Modals
   const [logoutModal, setLogoutModal] = useState(false);
+
+  useEffect(() => {
+    console.log("حالة الجلسة الحالية:", session);
+  }, [session]);
 
   // دالة لفتح وإغلاق الـ drawer
   const toggleDrawer = () => {
@@ -176,10 +182,15 @@ export default function Settings() {
               ]}
             >
               <Image
-                source={require("../assets/images/user.png")}
+                source={{
+                  uri:
+                    session?.user?.user_metadata.avatar_url ||
+                    "https://ui-avatars.com/api/?name=" +
+                      (session?.user?.user_metadata.full_name || "User"),
+                }}
                 style={[styles.Image, { borderColor: mainColor }]}
               />
-              <View style={styles.profileInfo}>
+              <View style={[styles.profileInfo, {flexShrink:1}]}>
                 <Text
                   style={{
                     fontSize: 16,
@@ -187,10 +198,10 @@ export default function Settings() {
                     color: theme.primary,
                   }}
                 >
-                  {t("username")}
+                  {session?.user?.user_metadata?.full_name || "مستخدم ريشة"}
                 </Text>
-                <Text style={{ color: theme.secondary }}>
-                  example@gmail.com
+                <Text style={{ color: theme.secondary }} ellipsizeMode="tail">
+                  {session?.user?.email || "غير مسجل"}
                 </Text>
               </View>
             </View>

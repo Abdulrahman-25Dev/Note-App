@@ -20,15 +20,13 @@ const Signup = () => {
   const [error, setError] = useState<string>("");
   const [showPassword1, setShowPassword1] = useState<boolean>(false);
   const [showPassword2, setShowPassword2] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false); // حالة التحميل أثناء الاتصال بالسيرفر
+  const [loading, setLoading] = useState<boolean>(false);
+  const [fullName, setFullName] = useState<string>(""); // حالة التحميل أثناء الاتصال بالسيرفر
 
   // 2. تحديث الدالة لتتصل بـ Supabase سحابياً
   const handleSignup = async () => {
-    if (!email || !password || !confirmPassword) {
+    if (!email || !password || !fullName) {
       setError("يرجى ملء جميع الحقول");
-      return;
-    } else if (password !== confirmPassword) {
-      setError("كلمة المرور غير متطابقة");
       return;
     } else if (password.length < 6) {
       setError("كلمة المرور يجب ان تكون على الاقل 6 حروف");
@@ -43,7 +41,13 @@ const Signup = () => {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password: password,
-      });
+        options:{
+          data: {
+            full_name: fullName,
+          },
+        },
+      }
+    );
 
       if (signUpError) {
         // عرض الخطأ القادم من السيرفر (مثل إيميل مستخدم مسبقاً، إلخ)
@@ -90,7 +94,33 @@ const Signup = () => {
       <Text style={styles.subtitle}>انضم إلى عالم ريشة الذكي والآمن</Text>
 
       <View style={styles.inputContainer}>
-        {/* حقل البريد الإلكتروني */}
+        {/* حقل الاسم الكامل */}
+
+        <TextInput
+          label="اسم المستخدم"
+          value={fullName}
+          keyboardType="default"
+          autoCapitalize="none" // منع تكبير الحرف الأول تلقائياً لتجنب مشاكل تسجيل الدخول
+          onChangeText={(text) => {
+            setFullName(text);
+            if (error) setError("");
+          }}
+          style={styles.input}
+          mode="outlined"
+          activeOutlineColor="#00B4D8"
+          outlineColor="#1E293B"
+          textColor="#F8FAFC"
+          placeholderTextColor="#64748B"
+          theme={{
+            roundness: 14,
+            colors: {
+              onSurfaceVariant: "#64748B",
+              background: "#0F172A",
+            },
+          }}
+          placeholder="example@gmail.com"
+          right={<TextInput.Icon icon="account" color="#64748B" />}
+        />
         <TextInput
           label="البريد الالكتروني"
           value={email}
@@ -145,38 +175,6 @@ const Signup = () => {
               icon={showPassword1 ? "eye-off" : "eye"}
               color="#64748B"
               onPress={() => setShowPassword1(!showPassword1)}
-            />
-          }
-        />
-
-        {/* حقل تأكيد كلمة المرور */}
-        <TextInput
-          label="تاكيد كلمة المرور"
-          value={confirmPassword}
-          onChangeText={(text) => {
-            setConfirmPassword(text);
-            if (error) setError("");
-          }}
-          secureTextEntry={!showPassword2}
-          style={styles.input}
-          mode="outlined"
-          activeOutlineColor="#00B4D8"
-          outlineColor="#1E293B"
-          textColor="#F8FAFC"
-          placeholderTextColor="#64748B"
-          theme={{
-            roundness: 14,
-            colors: {
-              onSurfaceVariant: "#64748B",
-              background: "#0F172A",
-            },
-          }}
-          placeholder="••••••••"
-          right={
-            <TextInput.Icon
-              icon={showPassword2 ? "eye-off" : "eye"}
-              color="#64748B"
-              onPress={() => setShowPassword2(!showPassword2)}
             />
           }
         />

@@ -195,7 +195,7 @@ const Favorites = () => {
             onPress={() => setShowClearFavoritesModal(true)}
             style={[styles.headerActionButton, { backgroundColor: theme.card }]}
           >
-            <Ionicons name="trash" size={22} color={"#DAA7A3"} />
+            <Ionicons name="heart-dislike" size={22} color={"#DAA7A3"} />
           </Pressable>
           <Text style={[styles.headerTitle, { color: theme.primary }]}>
             {t("favorites")}
