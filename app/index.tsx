@@ -33,6 +33,18 @@ export default function Index() {
   }, []);
   const isRTL = i18n.language === "ar";
 
+  const fetchNotes = useNotesStore((state) => state.fetchNotes);
+
+// تعديل الـ useEffect لاستدعاء جلب البيانات من السحاب فور تحميل الصفحة
+useEffect(() => {
+  const arabic = i18n.language === "ar";
+  dayjs.locale(arabic ? "ar" : "en");
+  dayjs.extend(relativeTime);
+  
+  // استدعاء جلب المذكرات من سوبابيس فوراً
+  fetchNotes();
+}, []);
+
   // جلب الثيم من الـ store
   const { isDarkMode } = useThemeStore();
   const theme = isDarkMode ? Colors.dark : Colors.light;

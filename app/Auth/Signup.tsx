@@ -1,7 +1,9 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native'
+import { StyleSheet, Text, View, Image, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { useState } from 'react'
 import { TextInput } from 'react-native-paper'
 import { router } from 'expo-router'
+// 1. استيراد عميل سوبابيس من ملف الإعداد الخاص بك
+import { supabase } from '../../supabase'; // تأكد من مطابقة المسار الفعلي لملف supabase.ts
 
 const Signup = () => {
   const [email, setEmail] = useState<string>('');
@@ -10,8 +12,10 @@ const Signup = () => {
   const [error, setError] = useState<string>('');
   const [showPassword1, setShowPassword1] = useState<boolean>(false);
   const [showPassword2, setShowPassword2] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false); // حالة التحميل أثناء الاتصال بالسيرفر
 
-  const handleSignup = () => {
+  // 2. تحديث الدالة لتتصل بـ Supabase سحابياً
+  const handleSignup = async () => {
     if ( !email || !password || !confirmPassword) {
       setError('يرجى ملء جميع الحقول');
       return;
@@ -23,18 +27,33 @@ const Signup = () => {
       return;
     }
       
-    console.log('Signup successful!');
-    router.replace('/');
+    setLoading(true);
+    setError('');
+
+    try {
+      // محاولة تسجيل حساب جديد في سوبابيس
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: password,
+      });
+
+      if (signUpError) {
+        // عرض الخطأ القادم من السيرفر (مثل إيميل مستخدم مسبقاً، إلخ)
+        setError(signUpError.message);
+      } else {
+        alert('تم إنشاء الحساب بنجاح! إذا تطلب الأمر تفعيل البريد، يرجى مراجعة صندوق الوارد الخاص بك.');
+        // بعد نجاح التسجيل، نوجه المستخدم تلقائياً للواجهة الرئيسية أو شاشة الدخول
+        router.replace('/');
+      }
+    } catch (e) {
+      setError('حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة لاحقاً');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <View style={styles.container}>
-      {/* شعار ريشة المتوهج بالأعلى لتعزيز ثراء الواجهة بصرية
-      <Image 
-        source={require("@/assets/images/icon.png")}
-        style={styles.logo}
-        resizeMode="contain"
-      /> */}
 
       <Text style={styles.title}>إنشاء حساب جديد</Text>
       <Text style={styles.subtitle}>انضم إلى عالم ريشة الذكي والآمن</Text>
@@ -45,14 +64,15 @@ const Signup = () => {
           label='البريد الالكتروني'
           value={email}
           keyboardType='email-address'
+          autoCapitalize='none' // منع تكبير الحرف الأول تلقائياً لتجنب مشاكل تسجيل الدخول
           onChangeText={(text) => {
             setEmail(text);
             if(error) setError('');
           }}
           style={styles.input}
           mode='outlined'
-          activeOutlineColor='#00B4D8' // لون الـ Teal عند التفاعل
-          outlineColor='#1E293B' // حدود رمادية داكنة تندمج مع الخلفية
+          activeOutlineColor='#00B4D8'
+          outlineColor='#1E293B'
           textColor='#F8FAFC'
           placeholderTextColor='#64748B'
           theme={{
@@ -138,13 +158,23 @@ const Signup = () => {
             
       {error && <Text style={styles.errorText}>{error}</Text>}
       
-      {/* زر تسجيل حساب جديد */}
-      <TouchableOpacity style={styles.SignupBtn} onPress={handleSignup}>
-        <Image
-          source={require("@/assets/images/signup.png")}
-          style={styles.btnIcon}
-        />
-        <Text style={styles.SignupText}>إنشاء حساب</Text>
+      {/* زر تسجيل حساب جديد (يدعم حالة التحميل الآن) */}
+      <TouchableOpacity 
+        style={[styles.SignupBtn, loading && { opacity: 0.7 }]} 
+        onPress={handleSignup}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#020617" size="small" />
+        ) : (
+          <>
+            <Image
+              source={require("@/assets/images/signup.png")}
+              style={styles.btnIcon}
+            />
+            <Text style={styles.SignupText}>إنشاء حساب</Text>
+          </>
+        )}
       </TouchableOpacity>
 
       {/* الانتقال لصفحة تسجيل الدخول */}
@@ -196,7 +226,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#020617', // تطابق كامل مع خلفية شاشة الدخول الداكنة الفخمة
+    backgroundColor: '#020617', 
     paddingHorizontal: 20,
   },
   logo: {
@@ -245,7 +275,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 14,
     justifyContent: 'center',
-    backgroundColor: '#00B4D8', // اللون المعتمد (Teal)
+    backgroundColor: '#00B4D8', 
     marginTop: 6,
     shadowColor: '#00B4D8',
     shadowOffset: { width: 0, height: 4 },
