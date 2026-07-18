@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useSegments } from "expo-router";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { Switch } from "react-native-paper";
 import { useThemeStore } from "../store/useThemeStore";
@@ -19,6 +19,8 @@ import { Colors } from "../Constants/Colors";
 import { useTranslation } from "react-i18next";
 import SharedModal from "../components/sharedModal";
 import { useAuthStore } from "../store/useAuthStore";
+import { useFocusEffect } from "@react-navigation/native";
+import { fetchProfileData } from "../profileService"; // تأكد من المسار الصحيح
 
 export default function Settings() {
   const session = useAuthStore((state) => state.session);
@@ -33,6 +35,11 @@ export default function Settings() {
   const animatedValue = useRef(new Animated.Value(0)).current;
   const segments = useSegments();
   const currentTab = segments[1] || "settings";
+
+  const [profile, setProfile] = useState<{
+    username: string;
+    avatar_url: string;
+  } | null>(null);
 
   // Modals
   const [logoutModal, setLogoutModal] = useState(false);
@@ -56,6 +63,16 @@ export default function Settings() {
     inputRange: [0, 1],
     outputRange: isRTL ? [width, 0] : [-width, 0],
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      if (session?.user?.id) {
+        fetchProfileData(session.user.id).then((data) => {
+          if (data) setProfile(data);
+        });
+      }
+    }, [session?.user?.id]),
+  );
 
   const colorsOptions = [
     { id: "teal", hex: "#00B4D8", name: "أزرق مخضر" },
@@ -184,13 +201,14 @@ export default function Settings() {
               <Image
                 source={{
                   uri:
+                    profile?.avatar_url ||
                     session?.user?.user_metadata.avatar_url ||
                     "https://ui-avatars.com/api/?name=" +
-                      (session?.user?.user_metadata.full_name || "User"),
+                      (profile?.username || "User"),
                 }}
                 style={[styles.Image, { borderColor: mainColor }]}
               />
-              <View style={[styles.profileInfo, {flexShrink:1}]}>
+              <View style={[styles.profileInfo, { flexShrink: 1 }]}>
                 <Text
                   style={{
                     fontSize: 16,
@@ -198,7 +216,9 @@ export default function Settings() {
                     color: theme.primary,
                   }}
                 >
-                  {session?.user?.user_metadata?.full_name || "مستخدم ريشة"}
+                  {profile?.username ||
+                    session?.user?.user_metadata?.full_name ||
+                    "مستخدم ريشة"}
                 </Text>
                 <Text style={{ color: theme.secondary }} ellipsizeMode="tail">
                   {session?.user?.email || "غير مسجل"}
@@ -379,6 +399,7 @@ export default function Settings() {
                     {t("editProfile")}
                   </Text>
                   <TouchableOpacity
+                    onPress={() => router.push("./EditProfile")}
                     style={[
                       styles.DeleteBtn,
                       { backgroundColor: theme.card, borderColor: mainColor },

@@ -53,6 +53,21 @@ const Signup = () => {
         // عرض الخطأ القادم من السيرفر (مثل إيميل مستخدم مسبقاً، إلخ)
         setError(signUpError.message);
       } else {
+        if (data.user) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              { 
+                id: data.user.id, 
+                username: fullName,
+                // يمكنك إضافة أي أعمدة أخرى إذا وجدت
+              }
+            ]);
+
+          if (profileError) {
+            console.error("خطأ في إنشاء البروفايل:", profileError.message);
+          }
+        }
         alert(
           "تم إنشاء الحساب بنجاح! إذا تطلب الأمر تفعيل البريد، يرجى مراجعة صندوق الوارد الخاص بك.",
         );
@@ -238,10 +253,10 @@ const Signup = () => {
 
         <TouchableOpacity style={styles.socialBtn}>
           <Image
-            source={require("@/assets/images/twitter.png")}
+            source={require("@/assets/images/microsoft.png")}
             style={styles.socialIcon}
           />
-          <Text style={styles.socialText}>المتابعة بواسطة Twitter/X</Text>
+          <Text style={styles.socialText}>المتابعة بواسطة Microsoft</Text>
         </TouchableOpacity>
       </View>
     </View>

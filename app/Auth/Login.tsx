@@ -213,10 +213,10 @@ const Login = () => {
 
         <TouchableOpacity style={styles.socialButton}>
           <Image
-            source={require("@/assets/images/twitter.png")}
+            source={require("@/assets/images/microsoft.png")}
             style={styles.socialIcon}
           />
-          <Text style={styles.socialText}>المتابعة بواسطة Twitter/X</Text>
+          <Text style={styles.socialText}>المتابعة بواسطة Microsoft</Text>
         </TouchableOpacity>
       </View>
     </View>

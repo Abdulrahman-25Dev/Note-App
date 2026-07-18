@@ -26,13 +26,13 @@ const slides = [
     id: 2,
     title: 'تنظيم ذكي بالـ AI',
     subtext: 'دع ريشة يلخص نصوصك ويقترح لك الوسوم تلقائياً بالذكاء الاصطناعي ليوفر وقتك وجهدك.',
-    image: require('../assets/images/ai.png'), // أيقونة الصاروخ والـ AI
+    image: require('../assets/images/ai.png'), // أيقونة الـ AI
   },
   {
     id: 3,
     title: 'ملاحظاتك آمنة في السحاب',
     subtext: 'مزامنة لحظية وفورية لحماية أفكارك والوصول إليها من أي جهاز بفضل قوة وسرعة Supabase.',
-    image: require('../assets/images/cloud.png'), // يمكنك مستقبلاً استبدالها بأيقونة سحابية إذا أردت
+    image: require('../assets/images/cloud.png'), // أيقونة السحابة الذكية
   }
 ];
 
