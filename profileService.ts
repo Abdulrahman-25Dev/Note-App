@@ -58,5 +58,6 @@ export const uploadAvatar = async (userId: string, fileUri: string) => {
     .from("avatars")
     .getPublicUrl(fileName);
 
-  return publicUrlData.publicUrl;
+// في دالة uploadAvatar، عدل سطر الإرجاع:
+return `${publicUrlData.publicUrl}?t=${Date.now()}`;
 };

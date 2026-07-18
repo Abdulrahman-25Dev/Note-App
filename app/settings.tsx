@@ -64,13 +64,20 @@ export default function Settings() {
     outputRange: isRTL ? [width, 0] : [-width, 0],
   });
 
+  // في ملف Settings.tsx
   useFocusEffect(
     useCallback(() => {
-      if (session?.user?.id) {
-        fetchProfileData(session.user.id).then((data) => {
-          if (data) setProfile(data);
-        });
-      }
+      // هذه الدالة ستعمل في كل مرة تصبح فيها الشاشة "مُركزة" (Focus)
+      const loadData = async () => {
+        if (session?.user?.id) {
+          const data = await fetchProfileData(session.user.id);
+          if (data) {
+            setProfile(data); // هذا سيحدث الـ state ويعيد رسم الواجهة بالبيانات الجديدة
+          }
+        }
+      };
+
+      loadData();
     }, [session?.user?.id]),
   );
 
@@ -200,10 +207,9 @@ export default function Settings() {
             >
               <Image
                 source={{
-                  uri:
-                    profile?.avatar_url ||
-                    session?.user?.user_metadata.avatar_url ||
-                    "https://ui-avatars.com/api/?name=" +
+                  uri: profile?.avatar_url
+                    ? `${profile.avatar_url.split("?")[0]}?t=${new Date().getTime()}` // تجديد الرابط هنا
+                    : "https://ui-avatars.com/api/?name=" +
                       (profile?.username || "User"),
                 }}
                 style={[styles.Image, { borderColor: mainColor }]}
