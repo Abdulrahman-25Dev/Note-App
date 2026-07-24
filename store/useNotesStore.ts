@@ -1,14 +1,13 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createJSONStorage, persist } from "zustand/middleware";
 // قم بتعديل هذا المسار ليتطابق مع ملف إعداد سوبابيس الخاص بك
-import { supabase } from "../supabase"; 
-
+import { supabase } from "../supabase";
+import { mmkvStorage } from "./mmkvStorage";
 type Note = {
   id: string; // معرف فريد UUID
   title: string;
   content: string;
-  createdAt: string; 
+  createdAt: string;
   favorite: boolean;
   deleted: boolean;
   user_id?: string;
@@ -22,7 +21,10 @@ type NotesState = {
   restoreNote: (id: string) => Promise<void>;
   deletepermanentlyNote: (id: string) => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
-  updateNote: (id: string, data: { title: string; content: string }) => Promise<void>;
+  updateNote: (
+    id: string,
+    data: { title: string; content: string },
+  ) => Promise<void>;
   deleteAllNotes: () => Promise<void>;
   removeAllFavorites: () => Promise<void>;
   deleteAllDeleted: () => Promise<void>;
@@ -45,32 +47,68 @@ export const useNotesStore = create<NotesState>()(
 
       // جلب المذكرات من سوبابيس عند توفر الإنترنت
       fetchNotes: async () => {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session?.user) return;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
 
-          const { data, error } = await supabase
-            .from("notes")
-            .select("*")
-            .order("created_at", { ascending: false });
+    // 1️⃣ جلب الملاحظات الموجودة حالياً في ذاكرة الجهاز المحلية
+    const localNotes = get().notes || [];
 
-          if (error) throw error;
+    // 2️⃣ جلب بيانات السيرفر
+    const { data: serverNotes, error } = await supabase
+      .from("notes")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-          if (data) {
-            const formattedNotes = data.map((n: any) => ({
-              id: n.id,
-              title: n.title || "",
-              content: n.content || "",
-              createdAt: n.created_at,
-              favorite: n.favorite || false,
-              deleted: n.deleted || false,
-            }));
-            set({ notes: formattedNotes });
-          }
-        } catch (e) {
-          console.log("Offline mode: Fetching notes from local storage instead.");
-        }
-      },
+    if (error) throw error;
+
+    if (serverNotes) {
+      const serverIds = new Set(serverNotes.map((n: any) => n.id));
+
+      // 3️⃣ كشف الملاحظات التي تم إضافتها أوفلاين ولم تصل السيرفر بعد
+      const offlineCreatedNotes = localNotes.filter((n: any) => !serverIds.has(n.id));
+
+      // 4️⃣ رفع الملاحظات الجديدة أوفلاين إلى السيرفر في الخلفية
+      if (offlineCreatedNotes.length > 0) {
+        const notesToUpload = offlineCreatedNotes.map((n: any) => ({
+          id: n.id,
+          title: n.title,
+          content: n.content,
+          user_id: session.user.id,
+          favorite: n.favorite,
+          deleted: n.deleted,
+        }));
+
+        await supabase.from("notes").upsert(notesToUpload);
+      }
+
+      // 5️⃣ الدمج الذكي:
+      // الملاحظات المحلية لها الأولوية لتغطية التعديلات (Update/Favorite/Delete) التي حدثت أوفلاين
+      const localNotesMap = new Map(localNotes.map((n: any) => [n.id, n]));
+
+      // تحويل بيانات السيرفر لتنسيق المتجر
+      const formattedServerNotes = serverNotes.map((n: any) => ({
+        id: n.id,
+        title: n.title || "",
+        content: n.content || "",
+        createdAt: n.created_at,
+        favorite: n.favorite || false,
+        deleted: n.deleted || false,
+        user_id: n.user_id,
+      }));
+
+      // ندمج: إذا كان التعديل موجود محلياً نأخذه، وإلا نعتمد بيانات السيرفر
+      const mergedNotes = [
+        ...offlineCreatedNotes, // الملاحظات الأوفلاين الجديدة أولاً
+        ...formattedServerNotes.map((sNote: any) => localNotesMap.get(sNote.id) || sNote),
+      ];
+
+      set({ notes: mergedNotes });
+    }
+  } catch (e) {
+    console.log("Offline mode: Fetching notes from local storage instead.");
+  }
+},
 
       // إضافة مذكرة (محلياً فوراً، وسحابياً في حال توفر الشبكة)
       // إضافة مذكرة جديدة بدون أي رمشة أو تعليق في الواجهة
@@ -78,7 +116,9 @@ export const useNotesStore = create<NotesState>()(
         const localId = generateUUID(); // توليد معرّف فريد UUID محلياً واستخدامه كمعرّف رئيسي دائم
         const createdAt = new Date().toISOString();
 
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         const userId = session?.user?.id;
 
         const newNote: Note = {
@@ -99,22 +139,24 @@ export const useNotesStore = create<NotesState>()(
         // 2. الرفع السحابي في الخلفية بنفس الـ ID دون الحاجة لتحديث الواجهة مجدداً
         if (userId) {
           try {
-            const { error } = await supabase
-              .from("notes")
-              .insert([{
+            const { error } = await supabase.from("notes").insert([
+              {
                 id: localId, // نرسل نفس الـ ID المولد محلياً ليتطابق السحاب مع المحلي تماماً
                 title,
                 content,
                 user_id: userId,
                 favorite: false,
                 deleted: false,
-              }]);
+              },
+            ]);
 
             if (error) {
               console.log("Database Sync Error:", error.message);
             }
           } catch (netError) {
-            console.log("Note saved locally! (Waiting for internet connection to sync)");
+            console.log(
+              "Note saved locally! (Waiting for internet connection to sync)",
+            );
           }
         }
       },
@@ -123,7 +165,9 @@ export const useNotesStore = create<NotesState>()(
       deleteNote: async (id) => {
         // تحديث محلي فوري
         set((state) => ({
-          notes: state.notes.map((note) => (note.id === id ? { ...note, deleted: true } : note)),
+          notes: state.notes.map((note) =>
+            note.id === id ? { ...note, deleted: true } : note,
+          ),
         }));
 
         // محاولة التحديث في السحابة
@@ -137,7 +181,9 @@ export const useNotesStore = create<NotesState>()(
       // استعادة المذكرة
       restoreNote: async (id) => {
         set((state) => ({
-          notes: state.notes.map((note) => (note.id === id ? { ...note, deleted: false } : note)),
+          notes: state.notes.map((note) =>
+            note.id === id ? { ...note, deleted: false } : note,
+          ),
         }));
 
         try {
@@ -167,11 +213,16 @@ export const useNotesStore = create<NotesState>()(
 
         const nextFavoriteState = !noteToUpdate.favorite;
         set((state) => ({
-          notes: state.notes.map((note) => (note.id === id ? { ...note, favorite: nextFavoriteState } : note)),
+          notes: state.notes.map((note) =>
+            note.id === id ? { ...note, favorite: nextFavoriteState } : note,
+          ),
         }));
 
         try {
-          await supabase.from("notes").update({ favorite: nextFavoriteState }).eq("id", id);
+          await supabase
+            .from("notes")
+            .update({ favorite: nextFavoriteState })
+            .eq("id", id);
         } catch (e) {
           console.log("Offline change: toggled favorite locally.");
         }
@@ -180,7 +231,9 @@ export const useNotesStore = create<NotesState>()(
       // تحديث المذكرة
       updateNote: async (id, { title, content }) => {
         set((state) => ({
-          notes: state.notes.map((note) => (note.id === id ? { ...note, title, content } : note)),
+          notes: state.notes.map((note) =>
+            note.id === id ? { ...note, title, content } : note,
+          ),
         }));
 
         try {
@@ -193,11 +246,16 @@ export const useNotesStore = create<NotesState>()(
       // نقل جميع المذكرات للمحذوفات
       deleteAllNotes: async () => {
         set((state) => ({
-          notes: state.notes.map((note) => (!note.deleted ? { ...note, deleted: true } : note)),
+          notes: state.notes.map((note) =>
+            !note.deleted ? { ...note, deleted: true } : note,
+          ),
         }));
 
         try {
-          await supabase.from("notes").update({ deleted: true }).eq("deleted", false);
+          await supabase
+            .from("notes")
+            .update({ deleted: true })
+            .eq("deleted", false);
         } catch (e) {
           console.log("Offline change: deleted all notes locally.");
         }
@@ -206,11 +264,19 @@ export const useNotesStore = create<NotesState>()(
       // إزالة كل المفضلات
       removeAllFavorites: async () => {
         set((state) => ({
-          notes: state.notes.map((note) => (!note.deleted && note.favorite ? { ...note, favorite: false } : note)),
+          notes: state.notes.map((note) =>
+            !note.deleted && note.favorite
+              ? { ...note, favorite: false }
+              : note,
+          ),
         }));
 
         try {
-          await supabase.from("notes").update({ favorite: false }).eq("deleted", false).eq("favorite", true);
+          await supabase
+            .from("notes")
+            .update({ favorite: false })
+            .eq("deleted", false)
+            .eq("favorite", true);
         } catch (e) {
           console.log("Offline change: removed all favorites locally.");
         }
@@ -232,20 +298,24 @@ export const useNotesStore = create<NotesState>()(
       // استعادة كل المحذوفات
       restoreAllDeleted: async () => {
         set((state) => ({
-          notes: state.notes.map((note) => (note.deleted ? { ...note, deleted: false } : note)),
+          notes: state.notes.map((note) =>
+            note.deleted ? { ...note, deleted: false } : note,
+          ),
         }));
 
         try {
-          await supabase.from("notes").update({ deleted: false }).eq("deleted", true);
+          await supabase
+            .from("notes")
+            .update({ deleted: false })
+            .eq("deleted", true);
         } catch (e) {
           console.log("Offline change: restored all deleted notes locally.");
         }
       },
-      
     }),
     {
       name: "notes-storage",
-      storage: createJSONStorage(() => AsyncStorage),
-    }
-  )
+      storage: createJSONStorage(() => mmkvStorage),
+    },
+  ),
 );
