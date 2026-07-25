@@ -2,7 +2,7 @@ import {
   StyleSheet,
   Text,
   View,
-  Image,
+  Image, 
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
@@ -11,7 +11,6 @@ import { Button, TextInput } from "react-native-paper";
 import { router } from "expo-router";
 // 1. استيراد عميل سوبابيس من الملف الذي أنشأناه سابقاً
 import { supabase } from "../../supabase"; // تأكد من مطابقة المسار الفعلي لملف supabase.ts في مشروعك
-import * as WebBrowser from "expo-web-browser";
 
 const Login = () => {
   const [email, setEmail] = useState<string>("");
@@ -54,28 +53,6 @@ const Login = () => {
       setError("حدث خطأ غير متوقع أثناء الاتصال بالسيرفر");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: "https://hnadbzlgnyxfbpaaljap.supabase.co/auth/v1/callback",
-      },
-    });
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    // فتح المتصفح ليقوم المستخدم بتسجيل الدخول
-    const res = await WebBrowser.openAuthSessionAsync(data?.url ?? "");
-
-    if (res.type === "success") {
-      const { url } = res;
-      // هنا سيتعامل Supabase مع الـ URL تلقائياً بسبب الإعدادات التي فعلناها
     }
   };
 
@@ -182,43 +159,6 @@ const Login = () => {
       >
         ليس لديك حساب؟ أنشئ حسابا جديدا
       </Button>
-
-      {/* الفاصل البصري الأنيق */}
-      <View style={styles.dividerContainer}>
-        <View style={styles.divider} />
-        <Text style={styles.or}>أو</Text>
-        <View style={styles.divider} />
-      </View>
-
-      {/* أزرار التواصل الاجتماعي بالنمط المظلم الفخم */}
-      <View style={styles.iconsContainer}>
-        <TouchableOpacity
-          style={styles.socialButton}
-          onPress={handleGoogleSignIn}
-        >
-          <Image
-            source={require("@/assets/images/google.png")}
-            style={styles.socialIcon}
-          />
-          <Text style={styles.socialText}>المتابعة بواسطة Google</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.socialButton}>
-          <Image
-            source={require("@/assets/images/facebook.png")}
-            style={styles.socialIcon}
-          />
-          <Text style={styles.socialText}>المتابعة بواسطة Facebook</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.socialButton}>
-          <Image
-            source={require("@/assets/images/microsoft.png")}
-            style={styles.socialIcon}
-          />
-          <Text style={styles.socialText}>المتابعة بواسطة Microsoft</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };

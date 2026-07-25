@@ -23,7 +23,7 @@ const Add = () => {
   const titleRef = useRef<TextInput>(null);
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState<string>("");
-  const { isDarkMode } = useThemeStore();
+  const { isDarkMode, mainColor } = useThemeStore();
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
   useEffect(() => {
@@ -49,9 +49,9 @@ const Add = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={[styles.header, { backgroundColor: theme.background }]}>
-          <TouchableOpacity style={styles.SaveCon} onPress={handleSave}>
-            <Ionicons name="save" size={20} color="#28A745" />
-            <Text style={styles.Save}>{t("save")}</Text>
+          <TouchableOpacity style={[styles.SaveCon, {borderColor: mainColor}]} onPress={handleSave}>
+            <Ionicons name="save" size={20} color={mainColor} />
+            <Text style={[styles.Save, {color: mainColor}]}>{t("save")}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.BackCon}
@@ -120,15 +120,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#28A745",
-    paddingHorizontal: 10,
+    paddingHorizontal: 10, 
     paddingVertical: 10,
     fontWeight: "bold",
   },
   Save: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "#28A745",
   },
   BackCon: {
     flexDirection: "row",

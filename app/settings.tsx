@@ -1,4 +1,5 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { router, useSegments } from "expo-router";
@@ -21,7 +22,6 @@ import { Colors } from "../Constants/Colors";
 import { fetchProfileData } from "../profileService"; // تأكد من المسار الصحيح
 import { useAuthStore } from "../store/useAuthStore";
 import { useThemeStore } from "../store/useThemeStore";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Settings() {
   const session = useAuthStore((state) => state.session);
@@ -90,22 +90,22 @@ export default function Settings() {
   );
 
   // في ملف settings.tsx
-useFocusEffect(
-  useCallback(() => {
-    const loadCache = async () => {
-      try {
-        const cachedData = await AsyncStorage.getItem('@user_profile_data');
-        if (cachedData) {
-          setProfile(JSON.parse(cachedData)); // في settings.tsx توجد setProfile
+  useFocusEffect(
+    useCallback(() => {
+      const loadCache = async () => {
+        try {
+          const cachedData = await AsyncStorage.getItem("@user_profile_data");
+          if (cachedData) {
+            setProfile(JSON.parse(cachedData)); // في settings.tsx توجد setProfile
+          }
+        } catch (e) {
+          console.error(e);
         }
-      } catch (e) {
-        console.error(e);
-      }
-    };
+      };
 
-    loadCache();
-  }, [])
-);
+      loadCache();
+    }, []),
+  );
 
   const colorsOptions = [
     { id: "teal", hex: "#00B4D8", name: "أزرق مخضر" },
@@ -233,8 +233,6 @@ useFocusEffect(
             >
               <Image
                 source={{
-                  // الحل: إزالة ?t=${new Date().getTime()} نهائياً
-                  // الاعتماد على رابط ثابت يسمح لمكتبة expo-image بعمل كاش (Caching) على القرص
                   uri: profile?.avatar_url
                     ? profile.avatar_url.split("?")[0]
                     : "https://ui-avatars.com/api/?name=" +
@@ -734,7 +732,7 @@ const styles = StyleSheet.create({
   },
   Lang: {
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 15,
     borderWidth: 2,
   },
   switch: {

@@ -8,6 +8,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Share,
 } from "react-native";
 import { useEffect, useState, useRef } from "react";
 import { useLocalSearchParams, router } from "expo-router";
@@ -63,6 +64,13 @@ const Details = () => {
     };
   }, []);
 
+  const shareNote = async () => {
+    await Share.share({
+      message: `${note?.title}\n\n${note?.content}`,
+      title: note?.title || "",
+    });
+  };
+
   const deleteNote = () => {
     delNote(noteId);
     router.back();
@@ -78,17 +86,28 @@ const Details = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={[styles.header, { backgroundColor: theme.background }]}>
-
-          <TouchableOpacity
-            style={[styles.delete, { backgroundColor: theme.card }]}
-            onPress={() => setShowModal(true)}
-          >
-            <Ionicons
-              name="trash"
-              size={24}
-              color="#DAA7A4"
-            />
-          </TouchableOpacity>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity
+              style={[styles.delete, { backgroundColor: theme.card }]}
+              onPress={() => setShowModal(true)}
+            >
+              <Ionicons
+                name="trash"
+                size={24}
+                color="#DAA7A4"
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.share, { backgroundColor: theme.card }]}
+              onPress={shareNote}
+            >
+              <Ionicons
+                name="share-social"
+                size={24}
+                color={mainColor}
+              />
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity onPress={() => router.back()} style={styles.back}>
             <Ionicons
               name="arrow-forward"
@@ -184,6 +203,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 19,
     paddingVertical: 22,
   },
+  headerLeft: {
+    flexDirection: "row",
+    gap: 12,
+  },
   back: {
     justifyContent: "center",
     alignItems: "center",
@@ -192,6 +215,13 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   delete: {
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+    width: 44,
+    height: 44,
+  },
+  share: {
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 12,

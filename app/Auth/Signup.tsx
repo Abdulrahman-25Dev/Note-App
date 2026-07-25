@@ -12,14 +12,11 @@ import { router } from "expo-router";
 // 1. استيراد عميل سوبابيس من ملف الإعداد الخاص بك
 import { supabase } from "../../supabase"; // تأكد من مطابقة المسار الفعلي لملف supabase.ts
 
-import * as WebBrowser from "expo-web-browser";
 const Signup = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [showPassword1, setShowPassword1] = useState<boolean>(false);
-  const [showPassword2, setShowPassword2] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [fullName, setFullName] = useState<string>(""); // حالة التحميل أثناء الاتصال بالسيرفر
 
@@ -81,27 +78,6 @@ const Signup = () => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: "https://hnadbzlgnyxfbpaaljap.supabase.co/auth/v1/callback",
-      },
-    });
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    // فتح المتصفح ليقوم المستخدم بتسجيل الدخول
-    const res = await WebBrowser.openAuthSessionAsync(data?.url ?? "");
-
-    if (res.type === "success") {
-      const { url } = res;
-      // هنا سيتعامل Supabase مع الـ URL تلقائياً بسبب الإعدادات التي فعلناها
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -223,42 +199,6 @@ const Signup = () => {
       >
         <Text style={styles.backLoginText}>لديك حساب بالفعل؟ تسجيل الدخول</Text>
       </TouchableOpacity>
-
-      {/* الخط الفاصل الفاخر */}
-      <View style={styles.OrContainer}>
-        <View style={styles.OrLine}></View>
-        <Text style={styles.OrText}>أو</Text>
-        <View style={styles.OrLine}></View>
-      </View>
-
-      {/* أزرار التواصل الاجتماعي */}
-      <View style={styles.socialContainer}>
-        <TouchableOpacity 
-        onPress={handleGoogleSignIn}
-        style={styles.socialBtn}>
-          <Image
-            source={require("@/assets/images/google.png")}
-            style={styles.socialIcon}
-          />
-          <Text style={styles.socialText}>المتابعة بواسطة Google</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.socialBtn}>
-          <Image
-            source={require("@/assets/images/facebook.png")}
-            style={styles.socialIcon}
-          />
-          <Text style={styles.socialText}>المتابعة بواسطة Facebook</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.socialBtn}>
-          <Image
-            source={require("@/assets/images/microsoft.png")}
-            style={styles.socialIcon}
-          />
-          <Text style={styles.socialText}>المتابعة بواسطة Microsoft</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };

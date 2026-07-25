@@ -5,6 +5,7 @@ import { supabase } from '../supabase';
 import { fetchProfileData, updateProfileData, uploadAvatar } from '../profileService'; // استيراد دالة الرفع الجديدة
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
 
 const EditProfile = () => {
   const [username, setUsername] = useState("");
@@ -78,39 +79,48 @@ useFocusEffect(
   };
 
   const handleSave = async () => {
-    try {
-      setSaving(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  try {
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-      let finalAvatarUrl = avatarUrl; // القيمة الافتراضية هي الرابط القديم
+    let finalAvatarUrl = avatarUrl; // القيمة الافتراضية هي الرابط القديم
 
-      // 1. إذا تم اختيار صورة جديدة محلياً، قم برفعها أولاً
-      if (localImageUri) {
-        try {
-          finalAvatarUrl = await uploadAvatar(user.id, localImageUri);
-        } catch (uploadError) {
-          console.error("Upload Error:", uploadError);
-          Alert.alert("خطأ", "فشل رفع الصورة، سيتم حفظ الاسم فقط.");
-          // سنكمل العملية ونحفظ الاسم فقط في حال فشل الصورة
-        }
-      }
-
-      // 2. تحديث بيانات البروفايل في قاعدة البيانات (الاسم + الرابط الجديد أو القديم)
-      await updateProfileData(user.id, username, finalAvatarUrl);
-      
-      Alert.alert("نجاح", "تم تحديث البيانات بنجاح");
-      // تحديث الحالة في الواجهة
-      setAvatarUrl(finalAvatarUrl); 
-      setLocalImageUri(null); // مسح المسار المحلي بعد الحفظ
-
-    } catch (error) {
-      console.error(error);
-      Alert.alert("خطأ", "حدث خطأ أثناء محاولة حفظ البيانات.");
-    } finally {
-      setSaving(false);
+    // ⚡ 1. تحديث مبدئي فوري محلياً بالصورة الاسم والمسار المحلي (UI سريع جداً)
+    if (localImageUri) {
+      // نحدث الـ Local Cache / Store بالـ Uri المحلي فوراً لكي يظهر بالخلفية
+      updateProfileData(user.id, username, localImageUri); 
     }
-  };
+
+    // 2. إذا تم اختيار صورة جديدة محلياً، قم برفعها أولاً في الخلفية
+    if (localImageUri) {
+      try {
+        const uploadedUrl = await uploadAvatar(user.id, localImageUri);
+        // 🔄 إضافة timestamp لكسر كاش الصورة عند استلام الرابط الأونلاين
+        finalAvatarUrl = `${uploadedUrl}?t=${Date.now()}`;
+      } catch (uploadError) {
+        console.error("Upload Error:", uploadError);
+        Alert.alert("خطأ", "فشل رفع الصورة، سيتم حفظ الاسم فقط.");
+      }
+    }
+
+    // 3. تحديث بيانات البروفايل النهائية في قاعدة البيانات
+    await updateProfileData(user.id, username, finalAvatarUrl);
+    
+    Alert.alert("نجاح", "تم تحديث البيانات بنجاح");
+
+    // تحديث الحالة النهائية في الواجهة
+    setAvatarUrl(finalAvatarUrl); 
+    setLocalImageUri(null); // مسح المسار المحلي بعد الحفظ والرفع
+    router.back()
+
+  } catch (error) {
+    console.error(error);
+    Alert.alert("خطأ", "حدث خطأ أثناء محاولة حفظ البيانات.");
+  } finally {
+    setSaving(false);
+  }
+};
 
   if (loading) return <ActivityIndicator size="large" color="#fff" style={{flex: 1}} />;
 
