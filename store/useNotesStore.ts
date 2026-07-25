@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 // قم بتعديل هذا المسار ليتطابق مع ملف إعداد سوبابيس الخاص بك
 import { supabase } from "../supabase";
-import { mmkvStorage } from "./mmkvStorage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 type Note = {
   id: string; // معرف فريد UUID
   title: string;
@@ -315,7 +315,7 @@ export const useNotesStore = create<NotesState>()(
     }),
     {
       name: "notes-storage",
-      storage: createJSONStorage(() => mmkvStorage),
+      storage: createJSONStorage(() => AsyncStorage),
     },
   ),
 );
