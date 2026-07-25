@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, Image, SafeAreaView, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, Image, SafeAreaView, ActivityIndicator, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker'; // استيراد مكتبة اختيار الصور
 import { supabase } from '../supabase';
-import { fetchProfileData, updateProfileData, uploadAvatar } from '../profileService'; // استيراد دالة الرفع الجديدة
+import { fetchProfileData, updateProfileData, uploadAvatar } from '../profileService';
+import { useAlertStore } from '../store/useAlertStore';
+import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
@@ -11,6 +13,8 @@ const EditProfile = () => {
   const [username, setUsername] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null); // رابط الصورة من Supabase
   const [localImageUri, setLocalImageUri] = useState<string | null>(null); // رابط الصورة المحلية المختارة
+  const { t } = useTranslation();
+  const showAlert = useAlertStore((s) => s.showAlert);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -60,7 +64,7 @@ useFocusEffect(
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('عذراً', 'نحتاج لأذونات الوصول لمعرض الصور لتغيير الصورة.');
+        showAlert({ title: t("sorry"), message: t("permissionNeeded") });
         return;
       }
     }
@@ -100,14 +104,14 @@ useFocusEffect(
         finalAvatarUrl = `${uploadedUrl}?t=${Date.now()}`;
       } catch (uploadError) {
         console.error("Upload Error:", uploadError);
-        Alert.alert("خطأ", "فشل رفع الصورة، سيتم حفظ الاسم فقط.");
+        showAlert({ title: t("error"), message: t("uploadFailed") });
       }
     }
 
     // 3. تحديث بيانات البروفايل النهائية في قاعدة البيانات
     await updateProfileData(user.id, username, finalAvatarUrl);
     
-    Alert.alert("نجاح", "تم تحديث البيانات بنجاح");
+    showAlert({ title: t("success"), message: t("profileUpdated") });
 
     // تحديث الحالة النهائية في الواجهة
     setAvatarUrl(finalAvatarUrl); 
@@ -116,7 +120,7 @@ useFocusEffect(
 
   } catch (error) {
     console.error(error);
-    Alert.alert("خطأ", "حدث خطأ أثناء محاولة حفظ البيانات.");
+    showAlert({ title: t("error"), message: t("saveError") });
   } finally {
     setSaving(false);
   }

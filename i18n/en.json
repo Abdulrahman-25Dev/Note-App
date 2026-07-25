@@ -63,6 +63,15 @@
     "developerTitle":"Developer:",
     "developer":"This app was developed by Abd Alrahman",
     "email":"Contact us",
-    "Copyright":"© 2023 Rishah. All rights reserved."
-
+    "Copyright":"© 2023 Rishah. All rights reserved.",
+    "ok":"OK",
+    "copied":"Copied",
+    "copiedMessage":"Content copied to clipboard",
+    "sorry":"Sorry",
+    "permissionNeeded":"We need access to your photo library to change the photo.",
+    "error":"Error",
+    "uploadFailed":"Failed to upload image, only the name will be saved.",
+    "success":"Success",
+    "profileUpdated":"Profile updated successfully",
+    "saveError":"An error occurred while saving data."
 }

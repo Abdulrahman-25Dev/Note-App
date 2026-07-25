@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { I18nManager } from 'react-native';
 import Splash from "./Splash";
+import CustomAlert from "../components/CustomAlert";
 
 // لإجبار التطبيق ما ينعكس أبداً
 I18nManager.allowRTL(false);
@@ -33,6 +34,7 @@ export default function RootLayout() {
   return(
   <SafeAreaProvider>
       {showSplash ? <Splash /> : <Slot />}
+      <CustomAlert />
   </SafeAreaProvider>
   );
 }

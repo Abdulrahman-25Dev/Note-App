@@ -7,7 +7,6 @@ import {
   FlatList,
   Animated,
   Dimensions,
-  Alert,
   Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -23,7 +22,9 @@ import { useThemeStore } from "../store/useThemeStore";
 import { Colors } from "../Constants/Colors";
 import { useTranslation } from "react-i18next";
 import SharedModal from "../components/sharedModal";
+import DrawerMenu from "../components/DrawerMenu";
 import { useNotesStore } from "../store/useNotesStore";
+import { useAlertStore } from "../store/useAlertStore";
 
 export default function Index() {
   useEffect(() => {
@@ -92,9 +93,11 @@ useEffect(() => {
     outputRange: isRTL ? [width, 0] : [-width, 0],
   });
 
+  const showAlert = useAlertStore((s) => s.showAlert);
+
   const handleCopy = async (text: string) => {
     await Clipboard.setStringAsync(text);
-    Alert.alert("تم النسخ", " تم نسخ المحتوى الى الحافظة", [{ text: "حسنا" }]);
+    showAlert({ title: t("copied"), message: t("copiedMessage") });
   };
 
   const { t } = useTranslation();
@@ -105,103 +108,6 @@ useEffect(() => {
     deleteAllNotes();
     setShowDeleteModal(false);
     router.push("/");
-  };
-
-  const Drawer = () => {
-    const isActive = (tab: string) => currentTab === tab;
-    return (
-      <Animated.View
-        style={[
-          styles.drawer,
-          {
-            transform: [{ translateX }],
-            backgroundColor: theme.card,
-            right: isRTL ? 0 : undefined,
-            left: isRTL ? undefined : 0,
-          },
-        ]}
-      >
-        <View style={[styles.drawerHeader]}>
-          <TouchableOpacity style={styles.closeButton} onPress={toggleDrawer}>
-            <Ionicons name="close" size={28} color={theme.primary} />
-          </TouchableOpacity>
-          <Text style={[styles.drawerTitle, { color: theme.primary }]}>
-            {t("title")}
-          </Text>
-        </View>
-
-        <View style={styles.drawerContent}>
-          <TouchableOpacity
-            style={[
-              styles.menuItem,
-              { flexDirection: isRTL ? "row-reverse" : "row", gap: 10 },
-              isActive("index") && styles.activeMenuItem,
-              { backgroundColor: mainColor + "20" },
-            ]}
-            onPress={() => {
-              toggleDrawer();
-              router.push("/");
-            }}
-          >
-            <Ionicons name="document-text" size={24} color={theme.primary} />
-            <Text style={[styles.menuText, { color: theme.primary }]}>
-              {t("myNotes")}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.menuItem,
-              { flexDirection: isRTL ? "row-reverse" : "row", gap: 10 },
-              isActive("TrashPin") && styles.activeMenuItem,
-            ]}
-            onPress={() => {
-              toggleDrawer();
-              router.push("./TrashPin" as any);
-            }}
-          >
-            <Ionicons name="trash" size={24} color={theme.primary} />
-            <Text style={[styles.menuText, { color: theme.primary }]}>
-              {t("trash")}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.menuItem,
-              { flexDirection: isRTL ? "row-reverse" : "row", gap: 10 },
-              isActive("favorites") && styles.activeMenuItem,
-            ]}
-            onPress={() => {
-              toggleDrawer();
-              router.push("./favorites" as any);
-            }}
-          >
-            <Ionicons name="heart" size={24} color={theme.primary} />
-            <Text style={[styles.menuText, { color: theme.primary }]}>
-              {t("favorites")}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.menuItem,
-              { flexDirection: isRTL ? "row-reverse" : "row", gap: 10 },
-              isActive("settings") && styles.activeMenuItem,
-            ]}
-            onPress={() => {
-              toggleDrawer();
-              router.push("./settings");
-            }}
-          >
-            <Ionicons name="settings" size={24} color={theme.primary} />
-            <Text style={[styles.menuText, { color: theme.primary }]}>
-              {t("settings")}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-    );
   };
 
   return (
@@ -221,26 +127,15 @@ useEffect(() => {
             <Ionicons name="menu" size={24} color={theme.primary} />
           </TouchableOpacity>
         </View>
-        {/* ======= END HEADER ===== */}
 
-        {/*======= SHOW NOTES =======*/}
         <View style={[styles.showNotes, { backgroundColor: theme.background }]}>
           <View
             style={[
               styles.searchbar,
-              {
-                backgroundColor: theme.card,
-                borderColor: mainColor,
-                borderWidth: 0.5,
-              },
+              { backgroundColor: theme.card, borderColor: mainColor, borderWidth: 0.5 },
             ]}
           >
-            <Ionicons
-              name="search"
-              size={20}
-              color={mainColor}
-              style={{ marginLeft: 8 }}
-            />
+            <Ionicons name="search" size={20} color={mainColor} style={{ marginLeft: 8 }} />
             <TextInput
               value={search}
               onChangeText={(text) => setSearch(text)}
@@ -258,116 +153,58 @@ useEffect(() => {
               <View style={styles.noteContainer}>
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  style={[
-                    styles.note,
-                    {
-                      backgroundColor: theme.card,
-                      elevation: 5,
-                      borderColor: mainColor,
-                    },
-                  ]}
-                  onPress={() => {
-                    router.push(`/Notes/${item.id}`);
-                  }}
-                  onLongPress={() =>
-                    handleCopy(`${item.title}\n${item.content}`)
-                  }
+                  style={[styles.note, { backgroundColor: theme.card, elevation: 5, borderColor: mainColor }]}
+                  onPress={() => router.push(`/Notes/${item.id}`)}
+                  onLongPress={() => handleCopy(`${item.title}\n${item.content}`)}
                 >
                   <TouchableOpacity
                     onPress={() => handleFavorite(item.id)}
-                    style={{
-                      position: "absolute",
-                      bottom: 10,
-                      left: 10,
-                      zIndex: 1,
-                    }}
+                    style={{ position: "absolute", bottom: 10, left: 10, zIndex: 1 }}
                   >
-                    <Ionicons
-                      name={item.favorite ? "heart" : "heart-outline"}
-                      size={24}
-                      color={mainColor}
-                    />
+                    <Ionicons name={item.favorite ? "heart" : "heart-outline"} size={24} color={mainColor} />
                   </TouchableOpacity>
-                  <Text
-                    style={[styles.noteTitle, { color: theme.primary }]}
-                    numberOfLines={1}
-                  >
-                    {item.title}
-                  </Text>
-                  <Text
-                    style={[styles.noteContent, { color: theme.secondary }]}
-                    numberOfLines={1}
-                  >
-                    {item.content}
-                  </Text>
-                  <Text style={[styles.noteDate, { color: theme.secondary }]}>
-                    {dayjs(item.createdAt).fromNow()}
-                  </Text>
+                  <Text style={[styles.noteTitle, { color: theme.primary }]} numberOfLines={1}>{item.title}</Text>
+                  <Text style={[styles.noteContent, { color: theme.secondary }]} numberOfLines={1}>{item.content}</Text>
+                  <Text style={[styles.noteDate, { color: theme.secondary }]}>{dayjs(item.createdAt).fromNow()}</Text>
                 </TouchableOpacity>
               </View>
             )}
-            ListEmptyComponent={() => {
-              return (
-                <View>
-                  {search.length > 0 ? (
-                    <Text style={[styles.noNotes, { color: theme.primary }]}>
-                      {t("noFoundNotes")}
-                    </Text>
-                  ) : (
-                    <Text style={[styles.noNotes, { color: theme.primary }]}>
-                      {t("noNotes")}
-                    </Text>
-                  )}
-                </View>
-              );
-            }}
+            ListEmptyComponent={() => (
+              <View>
+                <Text style={[styles.noNotes, { color: theme.primary }]}>
+                  {search.length > 0 ? t("noFoundNotes") : t("noNotes")}
+                </Text>
+              </View>
+            )}
           />
-          <TouchableOpacity
-            style={[styles.Add, { backgroundColor: mainColor }]}
-            onPress={Add}
-          >
+          <TouchableOpacity style={[styles.Add, { backgroundColor: mainColor }]} onPress={Add}>
             <Ionicons name="add" size={32} color="#fff" />
           </TouchableOpacity>
         </View>
-        <SharedModal
-          visible={showDeleteModal}
-          onClose={() => setShowDeleteModal(false)}
-          onRequestClose={() => setShowDeleteModal(false)}
-        >
-          <View
-            style={[styles.modalContainer, { backgroundColor: theme.card }]}
-          >
-            <Text style={[styles.titleModal, { color: theme.primary }]}>
-              {t("DELALLNotes")}
-            </Text>
-            <Text style={[styles.textModal, { color: theme.primary }]}>
-              {t("sureDELAllNotes")}
-            </Text>
+        <SharedModal visible={showDeleteModal} onClose={() => setShowDeleteModal(false)} onRequestClose={() => setShowDeleteModal(false)}>
+          <View style={[styles.modalContainer, { backgroundColor: theme.card }]}>
+            <Text style={[styles.titleModal, { color: theme.primary }]}>{t("DELALLNotes")}</Text>
+            <Text style={[styles.textModal, { color: theme.primary }]}>{t("sureDELAllNotes")}</Text>
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalDeleteBtn, { backgroundColor: "#DC2626" }]}
-                onPress={handleDeleteAllNotes}
-              >
-                <Text style={{ color: "#ffffff", fontWeight: "bold" }}>
-                  {t("DEL")}
-                </Text>
+              <TouchableOpacity style={[styles.modalDeleteBtn, { backgroundColor: "#DC2626" }]} onPress={handleDeleteAllNotes}>
+                <Text style={{ color: "#ffffff", fontWeight: "bold" }}>{t("DEL")}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalCancelBtn, { backgroundColor: "#3B82F6" }]}
-                onPress={() => setShowDeleteModal(false)}
-              >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                  {t("CAN")}
-                </Text>
+              <TouchableOpacity style={[styles.modalCancelBtn, { backgroundColor: "#3B82F6" }]} onPress={() => setShowDeleteModal(false)}>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>{t("CAN")}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </SharedModal>
       </SafeAreaView>
-      {drawerOpen && (
-        <TouchableOpacity style={styles.overlay} onPress={toggleDrawer} />
-      )}
-      <Drawer />
+      <DrawerMenu
+        drawerOpen={drawerOpen}
+        translateX={translateX}
+        isRTL={isRTL}
+        theme={theme}
+        mainColor={mainColor}
+        currentTab={currentTab}
+        toggleDrawer={toggleDrawer}
+      />
     </View>
   );
 }
@@ -522,68 +359,5 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     marginRight: 5,
-  },
-  drawerHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    borderBottomColor: "#eee",
-  },
-  closeButton: {
-    padding: 10,
-    borderRadius: 5,
-    paddingTop: 40,
-  },
-  drawerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    paddingTop: 50,
-    textAlign: "right",
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  drawer: {
-    flex: 1,
-    position: "absolute",
-    top: 0,
-    right: 0,
-    width: Dimensions.get("window").width * 0.75,
-    height: "100%",
-    backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOffset: { width: -2, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 10,
-  },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  drawerContent: {
-    flex: 1,
-    paddingTop: 50,
-    paddingHorizontal: 20,
-  },
-  menuItem: {
-    flexDirection: "row-reverse",
-    alignItems: "center",
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-  },
-  menuText: {
-    fontSize: 18,
-    marginRight: 15,
-    color: "#333",
-  },
-  activeMenuItem: {
-    backgroundColor: "#",
-    borderRadius: 8,
-    paddingHorizontal: 10,
   },
 });
