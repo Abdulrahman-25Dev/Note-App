@@ -1,31 +1,98 @@
 import { supabase } from "./supabase"; // مسار ملف إعداد Supabase الخاص بك
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const fetchProfileData = async (userId: string) => {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("username, avatar_url")
-    .eq("id", userId)
-    .maybeSingle();
+  const cacheKey = `@user_profile_data_${userId}`;
 
-  if (error) throw error;
-  return data;
+  // 1. قراءة الكاش أولاً وإرجاعه فوراً
+  try {
+    const localData = await AsyncStorage.getItem(cacheKey);
+    if (localData) {
+      const cachedData = JSON.parse(localData);
+      // نجلب البيانات الجديدة في الخلفية بدون await، عشان ما نأخر العرض
+      refreshCacheInBackground(cacheKey, userId);
+      return cachedData;
+    }
+  } catch (e) {
+    console.log("خطأ في قراءة الكاش المحلي:", e);
+  }
+
+  // 2. أول مرة (ما في كاش)، ننتظر الجلب من السيرفر
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("username, avatar_url")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (data) {
+      await AsyncStorage.setItem(cacheKey, JSON.stringify(data));
+      return data;
+    }
+  } catch (error) {
+    console.log("تعذر الاتصال بالسيرفر (أوفلاين).");
+  }
+
+  return null;
 };
 
+// دالة مساعدة: تحديث الكاش في الخلفية (ما ننتظرها)
+const refreshCacheInBackground = async (cacheKey: string, userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("username, avatar_url")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!error && data) {
+      await AsyncStorage.setItem(cacheKey, JSON.stringify(data));
+    }
+  } catch (_) {
+    // فشل الاتصال - عادي، عندنا الكاش القديم
+  }
+};
+
+// تأكد من وجود export في البداية لتتمكن من استدعائها في الواجهات
 export const updateProfileData = async (
   userId: string,
-  username: string,
-  avatarUrl: string | null,
+  newUsername: string,
+  newAvatarUrl?: string | null
 ) => {
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      username,
-      avatar_url: avatarUrl,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", userId);
+  const PROFILE_CACHE_KEY = "@user_profile_data";
 
-  if (error) throw error;
+  // 1. تجهيز البيانات الجديدة
+  const updatedData = {
+    username: newUsername,
+    avatar_url: newAvatarUrl,
+    updated_at: new Date().toISOString(),
+  };
+
+  try {
+    // 2. تحديث الكاش المحلي فوراً (Offline-First)
+    await AsyncStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(updatedData));
+
+    // 3. إرسال التحديث لـ Supabase
+    const { data, error } = await supabase
+      .from("profiles")
+      .upsert({
+        id: userId,
+        ...updatedData,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // نرجع البيانات الجديدة ليستخدمها الـ Component
+    return { success: true, data: data || updatedData };
+  } catch (error: any) {
+    console.error("خطأ أثناء تحديث الملف الشخصي:", error.message);
+    // حتى لو فشل النت، نرجع نجاح حفظ الكاش المحلي
+    return { success: true, data: updatedData, offline: true };
+  }
 };
 
 // دالة لرفع الصورة

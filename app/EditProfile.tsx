@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, Image, SafeAreaView, ActivityIndicator, Alert, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker'; // استيراد مكتبة اختيار الصور
 import { supabase } from '../supabase';
 import { fetchProfileData, updateProfileData, uploadAvatar } from '../profileService'; // استيراد دالة الرفع الجديدة
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EditProfile = () => {
   const [username, setUsername] = useState("");
@@ -33,6 +35,24 @@ const EditProfile = () => {
     }
   };
 
+useFocusEffect(
+  useCallback(() => {
+    const loadUpdatedProfile = async () => {
+      try {
+        const cachedData = await AsyncStorage.getItem('@user_profile_data');
+        if (cachedData) {
+          const parsed = JSON.parse(cachedData);
+          if (parsed.username) setUsername(parsed.username);
+          if (parsed.avatar_url) setAvatarUrl(parsed.avatar_url);
+        }
+      } catch (e) {
+        console.error('خطأ قراءة الكاش:', e);
+      }
+    };
+
+    loadUpdatedProfile();
+  }, [])
+);
   // دالة فتح معرض الصور
   const handlePickImage = async () => {
     // طلب أذونات الوصول
@@ -97,7 +117,7 @@ const EditProfile = () => {
   // تحديد مصدر الصورة للعرض (الأولوية للمحلية، ثم للرابط القادم من Supabase، ثم Placeholder)
   const imageSource = localImageUri 
     ? { uri: localImageUri } 
-    : (avatarUrl ? { uri: avatarUrl } : require('../assets/images/ai.png'));
+    : (avatarUrl ? { uri: avatarUrl } : require('../assets/images/user.png'));
 
   return (
     <SafeAreaView style={styles.container}>

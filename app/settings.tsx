@@ -1,26 +1,27 @@
+import { Feather, Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { Image } from "expo-image";
+import { router, useSegments } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
-  Text,
-  View,
-  StyleSheet,
-  TouchableOpacity,
   Animated,
   Dimensions,
-  Image,
-  ScrollView,
   Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useSegments } from "expo-router";
-import { useRef, useState, useEffect, useCallback } from "react";
-import { Feather, Ionicons } from "@expo/vector-icons";
 import { Switch } from "react-native-paper";
-import { useThemeStore } from "../store/useThemeStore";
-import { Colors } from "../Constants/Colors";
-import { useTranslation } from "react-i18next";
+import { SafeAreaView } from "react-native-safe-area-context";
 import SharedModal from "../components/sharedModal";
-import { useAuthStore } from "../store/useAuthStore";
-import { useFocusEffect } from "@react-navigation/native";
+import { Colors } from "../Constants/Colors";
 import { fetchProfileData } from "../profileService"; // تأكد من المسار الصحيح
+import { useAuthStore } from "../store/useAuthStore";
+import { useThemeStore } from "../store/useThemeStore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Settings() {
   const session = useAuthStore((state) => state.session);
@@ -67,19 +68,44 @@ export default function Settings() {
   // في ملف Settings.tsx
   useFocusEffect(
     useCallback(() => {
-      // هذه الدالة ستعمل في كل مرة تصبح فيها الشاشة "مُركزة" (Focus)
+      let isMounted = true;
+
       const loadData = async () => {
         if (session?.user?.id) {
           const data = await fetchProfileData(session.user.id);
-          if (data) {
-            setProfile(data); // هذا سيحدث الـ state ويعيد رسم الواجهة بالبيانات الجديدة
+
+          // نحدث الـ State دائماً (حتى لو null) عشان نضمن ظهور البيانات المخزنة
+          if (isMounted) {
+            setProfile(data ?? null);
           }
         }
       };
 
       loadData();
+
+      return () => {
+        isMounted = false; // تنظيف لحماية الـ Memory
+      };
     }, [session?.user?.id]),
   );
+
+  // في ملف settings.tsx
+useFocusEffect(
+  useCallback(() => {
+    const loadCache = async () => {
+      try {
+        const cachedData = await AsyncStorage.getItem('@user_profile_data');
+        if (cachedData) {
+          setProfile(JSON.parse(cachedData)); // في settings.tsx توجد setProfile
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    loadCache();
+  }, [])
+);
 
   const colorsOptions = [
     { id: "teal", hex: "#00B4D8", name: "أزرق مخضر" },
@@ -207,12 +233,16 @@ export default function Settings() {
             >
               <Image
                 source={{
+                  // الحل: إزالة ?t=${new Date().getTime()} نهائياً
+                  // الاعتماد على رابط ثابت يسمح لمكتبة expo-image بعمل كاش (Caching) على القرص
                   uri: profile?.avatar_url
-                    ? `${profile.avatar_url.split("?")[0]}?t=${new Date().getTime()}` // تجديد الرابط هنا
+                    ? profile.avatar_url.split("?")[0]
                     : "https://ui-avatars.com/api/?name=" +
                       (profile?.username || "User"),
                 }}
                 style={[styles.Image, { borderColor: mainColor }]}
+                // خاصية مهمة جداً: عرض الصورة من الكاش فوراً إذا توفرت
+                cachePolicy="memory-disk"
               />
               <View style={[styles.profileInfo, { flexShrink: 1 }]}>
                 <Text

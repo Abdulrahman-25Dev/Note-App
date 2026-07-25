@@ -1,88 +1,106 @@
-// Add Notes screen 
-import { StyleSheet, Text, TouchableOpacity, View, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native'
-import {useState, useRef, useEffect} from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import { useThemeStore } from '../../store/useThemeStore'
-import { Colors } from '../../Constants/Colors'
-import { useTranslation } from 'react-i18next';
-import { useNotesStore } from '../../store/useNotesStore'
+// Add Notes screen
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Colors } from "../../Constants/Colors";
+import { useNotesStore } from "../../store/useNotesStore";
+import { useThemeStore } from "../../store/useThemeStore";
 
 const Add = () => {
   const { t } = useTranslation();
-  const titleRef = useRef<TextInput>(null)
-  const [title, setTitle] = useState<string>('')
-  const [content, setContent] = useState<string>('')
-  const { isDarkMode } = useThemeStore()
-  const theme = isDarkMode ? Colors.dark : Colors.light
+  const titleRef = useRef<TextInput>(null);
+  const [title, setTitle] = useState<string>("");
+  const [content, setContent] = useState<string>("");
+  const { isDarkMode } = useThemeStore();
+  const theme = isDarkMode ? Colors.dark : Colors.light;
 
   useEffect(() => {
     setTimeout(() => {
-      titleRef.current?.focus()
+      titleRef.current?.focus();
     }, 100);
-  }, [])
-  const addNote = useNotesStore((s) => s.addNote)
+  }, []);
+  const addNote = useNotesStore((s) => s.addNote);
   const handleSave = async () => {
     if (!title || !content) {
-      alert('Please fill all the fields')
-      return
+      alert("Please fill all the fields");
+      return;
     }
-    addNote({ title, content })
-    router.back()
-  }
-    return (
-      <SafeAreaView style={[styles.container, {backgroundColor: theme.background}]}>
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <View style={[styles.header, {backgroundColor: theme.background}]}>
-            <TouchableOpacity style={styles.SaveCon} onPress={handleSave}>
-              <Ionicons name="save" size={20} color="#fff" />
-              <Text style={styles.Save}>{t('save')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.BackCon} onPress={() => router.back()}>
-              <Text style={[styles.Back, {color: theme.primary}]}>{t('back')}</Text>
-              <Ionicons name="arrow-forward" size={20} color={theme.primary}
-                style={{paddingLeft: 5}}
-               />
-            </TouchableOpacity>
-          </View>
-          {/* END HEADER */}
-
-          {/* START BODY  */}
-          <View style={[styles.Add, {backgroundColor: theme.background}]}>
-            <TextInput
-              ref={titleRef}
-              value={title}
-              onChangeText={setTitle}
-              placeholderTextColor={'gray'}
-              placeholder={t('title1')}
-              style={[styles.inputTitle, {color: theme.primary}]}
+    addNote({ title, content });
+    router.back();
+  };
+  return (
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <View style={[styles.header, { backgroundColor: theme.background }]}>
+          <TouchableOpacity style={styles.SaveCon} onPress={handleSave}>
+            <Ionicons name="save" size={20} color="#28A745" />
+            <Text style={styles.Save}>{t("save")}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.BackCon}
+            onPress={() => router.back()}
+          >
+            <Text style={[styles.Back, { color: theme.primary }]}>
+              {t("back")}
+            </Text>
+            <Ionicons
+              name="arrow-forward"
+              size={20}
+              color={theme.primary}
+              style={{ paddingLeft: 5 }}
             />
-            <View style={styles.line} />
-            <ScrollView
-              contentContainerStyle={{ flexGrow: 1 }}
-              keyboardShouldPersistTaps="handled"
-            >
-              <TextInput
-                value={content}
-                onChangeText={setContent}
-                placeholderTextColor={'gray'}
-                placeholder={t('content')}
-                multiline
-                style={[styles.inputContent, {color: theme.primary}]}
-              />
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    
-    )
-  }
+          </TouchableOpacity>
+        </View>
+        {/* END HEADER */}
 
-export default Add
+        {/* START BODY  */}
+        <View style={[styles.Add, { backgroundColor: theme.background }]}>
+          <TextInput
+            ref={titleRef}
+            value={title}
+            onChangeText={setTitle}
+            placeholderTextColor={"gray"}
+            placeholder={t("title1")}
+            style={[styles.inputTitle, { color: theme.primary }]}
+          />
+          <View style={styles.line} />
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            <TextInput
+              value={content}
+              onChangeText={setContent}
+              placeholderTextColor={"gray"}
+              placeholder={t("content")}
+              multiline
+              style={[styles.inputContent, { color: theme.primary }]}
+            />
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+};
+
+export default Add;
 
 const styles = StyleSheet.create({
   container: {
@@ -94,23 +112,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 22,
-
   },
   SaveCon: {
     flexDirection: "row",
     gap: 5,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#28A745",
     borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#28A745",
     paddingHorizontal: 10,
     paddingVertical: 10,
-    fontWeight: "bold"
+    fontWeight: "bold",
   },
   Save: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "#fff"
+    color: "#28A745",
   },
   BackCon: {
     flexDirection: "row",
@@ -119,12 +137,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    fontWeight: "bold"
+    fontWeight: "bold",
   },
   Back: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "#000"
+    color: "#000",
   },
   Add: {
     flex: 1,
@@ -144,4 +162,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 10,
   },
-})
+});
