@@ -1,5 +1,5 @@
-import { supabase } from "./supabase"; // مسار ملف إعداد Supabase الخاص بك
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { supabase } from "./supabase"; // مسار ملف إعداد Supabase الخاص بك
 
 export const fetchProfileData = async (userId: string) => {
   const cacheKey = `@user_profile_data_${userId}`;
@@ -59,7 +59,7 @@ const refreshCacheInBackground = async (cacheKey: string, userId: string) => {
 export const updateProfileData = async (
   userId: string,
   newUsername: string,
-  newAvatarUrl?: string | null
+  newAvatarUrl?: string | null,
 ) => {
   const PROFILE_CACHE_KEY = "@user_profile_data";
 
@@ -125,6 +125,6 @@ export const uploadAvatar = async (userId: string, fileUri: string) => {
     .from("avatars")
     .getPublicUrl(fileName);
 
-// في دالة uploadAvatar، عدل سطر الإرجاع:
-return `${publicUrlData.publicUrl}?t=${Date.now()}`;
+  // في دالة uploadAvatar، عدل سطر الإرجاع:
+  return `${publicUrlData.publicUrl}?t=${Date.now()}`;
 };

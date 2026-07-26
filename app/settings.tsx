@@ -1,4 +1,5 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
+import NetInfo from "@react-native-community/netinfo";
 import { useFocusEffect } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { router, useSegments } from "expo-router";
@@ -20,6 +21,7 @@ import DrawerMenu from "../components/DrawerMenu";
 import SharedModal from "../components/sharedModal";
 import { Colors } from "../Constants/Colors";
 import { fetchProfileData } from "../profileService"; // تأكد من المسار الصحيح
+import { useAlertStore } from "../store/useAlertStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { useNotesStore } from "../store/useNotesStore";
 import { useThemeStore } from "../store/useThemeStore";
@@ -99,6 +101,22 @@ export default function Settings() {
       };
     }, []),
   );
+
+  const showAlert = useAlertStore((s) => s.showAlert);
+
+  const handleProtectedNavigation = async (targetRoute: any) => {
+    try {
+      const state = await NetInfo.fetch();
+      if (state.isConnected && state.isInternetReachable !== false) {
+        router.push(targetRoute);
+      } else {
+        showAlert({
+          title: t("offline"),
+          message: t("offlineAccessError"),
+        });
+      }
+    } catch {}
+  };
 
   const avatarUri =
     profile?.avatar_url && profile.avatar_url.trim() !== ""
@@ -330,7 +348,7 @@ export default function Settings() {
                     {t("editProfile")}
                   </Text>
                   <TouchableOpacity
-                    onPress={() => router.push("./EditProfile")}
+                    onPress={() => handleProtectedNavigation("./EditProfile")}
                     style={[
                       styles.DeleteBtn,
                       { backgroundColor: theme.card, borderColor: mainColor },
@@ -356,7 +374,9 @@ export default function Settings() {
                     {t("changePassword")}
                   </Text>
                   <TouchableOpacity
-                    onPress={() => router.push("./ChangePassword")}
+                    onPress={() =>
+                      handleProtectedNavigation("./ChangePassword")
+                    }
                     style={[
                       styles.DeleteBtn,
                       { backgroundColor: theme.card, borderColor: mainColor },

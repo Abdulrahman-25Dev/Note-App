@@ -92,5 +92,7 @@
   "uploadFailed": "Failed to upload image, only the name will be saved.",
   "success": "Success",
   "profileUpdated": "Profile updated successfully",
-  "saveError": "An error occurred while saving data."
+  "saveError": "An error occurred while saving data.",
+  "offline": "No Internet Connection",
+  "offlineAccessError": "Internet connection is required to access this screen."
 }

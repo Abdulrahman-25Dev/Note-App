@@ -6,7 +6,6 @@ import * as ImagePicker from "expo-image-picker"; // استيراد مكتبة �
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useAuthStore } from "../store/useAuthStore";
 import {
   ActivityIndicator,
   Image,
@@ -24,6 +23,7 @@ import {
   uploadAvatar,
 } from "../profileService";
 import { useAlertStore } from "../store/useAlertStore";
+import { useAuthStore } from "../store/useAuthStore";
 import { supabase } from "../supabase";
 
 const EditProfile = () => {
@@ -103,67 +103,76 @@ const EditProfile = () => {
     }
   };
 
- const handleSave = async () => {
-  try {
-    setSaving(true);
+  const handleSave = async () => {
+    try {
+      setSaving(true);
 
-    // 1. تحديد بيانات المستخدم مباشرة من الـ Store
-    const currentSession = useAuthStore.getState().session;
-    const userId = currentSession?.user?.id;
-    const currentEmail =
-      useAuthStore.getState().profile?.email ||
-      currentSession?.user?.email ||
-      "";
+      // 1. تحديد بيانات المستخدم مباشرة من الـ Store
+      const currentSession = useAuthStore.getState().session;
+      const userId = currentSession?.user?.id;
+      const currentEmail =
+        useAuthStore.getState().profile?.email ||
+        currentSession?.user?.email ||
+        "";
 
-    if (!userId) return;
+      if (!userId) return;
 
-    // ⚡ 2. تجهيز الصورة والتأكد من أنها ليست null لتفادي خطأ TypeScript
-    const displayAvatar = localImageUri || avatarUrl || "";
+      // ⚡ 2. تجهيز الصورة والتأكد من أنها ليست null
+      const displayAvatar = localImageUri || avatarUrl || "";
 
-    // ⚡ 3. تحديث الـ Store فوراً (0ms)
-    useAuthStore.getState().setProfile({
-      username: username,
-      avatar_url: displayAvatar,
-      email: currentEmail,
-    });
+      // 🎯 3. التحديث المباشر للـ Store + الضمان المحلي للـ Cache (الكود الذي سألت عنه)
+      const currentProfile = useAuthStore.getState().profile;
 
-    // 📣 4. إظهار تنبيه النجاح للمستخدم
-    showAlert({ title: t("success"), message: t("profileUpdated") });
-
-    // 🔙 5. العودة لشاشة الإعدادات
-    router.back();
-
-    // 🔄 6. المزامنة في الخلفية (رفع الصورة والتحديث في Supabase)
-    (async () => {
-      try {
-        let finalAvatarUrl = avatarUrl || "";
-
-        // رفع الصورة لو اختار المستخدم صورة جديدة
-        if (localImageUri) {
-          const uploadedUrl = await uploadAvatar(userId, localImageUri);
-          finalAvatarUrl = `${uploadedUrl}?t=${Date.now()}`;
-        }
-
-        // تحديث قاعدة البيانات في Supabase
-        await updateProfileData(userId, username, finalAvatarUrl);
-
-        // تحديث الـ Store برابط الصورة النهائي الأونلاين
-        useAuthStore.getState().setProfile({
+      useAuthStore.setState({
+        profile: {
+          ...(currentProfile || { email: currentEmail }),
           username: username,
-          avatar_url: finalAvatarUrl,
-          email: currentEmail,
-        });
-      } catch (asyncErr) {
-        console.error("خطأ المزامنة بالخلفية:", asyncErr);
-      }
-    })();
-  } catch (error) {
-    console.error(error);
-    showAlert({ title: t("error"), message: t("saveError") });
-  } finally {
-    setSaving(false);
-  }
-};
+          avatar_url: displayAvatar,
+        },
+      });
+
+      // 📣 4. إظهار تنبيه النجاح للمستخدم
+      showAlert({ title: t("success"), message: t("profileUpdated") });
+
+      // 🔙 5. العودة لشاشة الإعدادات
+      router.back();
+
+      // 🔄 6. المزامنة في الخلفية (عند توفر الإنترنت)
+      (async () => {
+        try {
+          let finalAvatarUrl = avatarUrl || "";
+
+          // رفع الصورة لو اختار المستخدم صورة جديدة
+          if (localImageUri) {
+            const uploadedUrl = await uploadAvatar(userId, localImageUri);
+            finalAvatarUrl = `${uploadedUrl}?t=${Date.now()}`;
+          }
+
+          // تحديث قاعدة البيانات في Supabase
+          await updateProfileData(userId, username, finalAvatarUrl);
+
+          // تحديث الـ Store بالرابط النهائي بعد الرفع
+          const updatedProfile = useAuthStore.getState().profile;
+          if (updatedProfile) {
+            useAuthStore.setState({
+              profile: {
+                ...updatedProfile,
+                username: username,
+                avatar_url: finalAvatarUrl,
+              },
+            });
+          }
+        } catch (asyncErr) {
+          console.log("Offline mode: background sync deferred");
+        }
+      })();
+    } catch (error) {
+      console.error(error);
+      showAlert({ title: t("error"), message: t("saveError") });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading)
     return <ActivityIndicator size="large" color="#fff" style={{ flex: 1 }} />;
@@ -190,7 +199,10 @@ const EditProfile = () => {
           style={[styles.avatarContainer]}
           onPress={handlePickImage}
         >
-          <Image source={imageSource} style={[styles.avatar , { borderColor: mainColor }]} />
+          <Image
+            source={imageSource}
+            style={[styles.avatar, { borderColor: mainColor }]}
+          />
           <Text style={[styles.changePhotoText, { color: mainColor }]}>
             {t("changePhoto")}
           </Text>
@@ -226,7 +238,7 @@ const EditProfile = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#121212" },
   content: { padding: 20 },
-  avatarContainer: { alignItems: "center", marginVertical: 30, },
+  avatarContainer: { alignItems: "center", marginVertical: 30 },
   avatar: {
     width: 120,
     height: 120,
