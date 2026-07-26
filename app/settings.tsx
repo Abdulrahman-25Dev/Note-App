@@ -22,7 +22,9 @@ import SharedModal from "../components/sharedModal";
 import { Colors } from "../Constants/Colors";
 import { fetchProfileData } from "../profileService"; // تأكد من المسار الصحيح
 import { useAuthStore } from "../store/useAuthStore";
+import { useNotesStore } from "../store/useNotesStore";
 import { useThemeStore } from "../store/useThemeStore";
+import { supabase } from "../supabase";
 
 export default function Settings() {
   const session = useAuthStore((state) => state.session);
@@ -42,6 +44,7 @@ export default function Settings() {
     username: string;
     avatar_url: string;
   } | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
 
   // Modals
   const [logoutModal, setLogoutModal] = useState(false);
@@ -67,29 +70,31 @@ export default function Settings() {
   });
 
   // في ملف Settings.tsx
-  useFocusEffect(
-    useCallback(() => {
-      let isMounted = true;
+useFocusEffect(
+  useCallback(() => {
+    let isMounted = true;
 
-      const loadData = async () => {
-        if (session?.user?.id) {
-          const data = await fetchProfileData(session.user.id);
+    const loadData = async () => {
+      // جلب المستخدم الحالي مباشرة من الجلسة النشطة لمنع تداخل الحسابات
+      const { data: { user } } = await supabase.auth.getUser();
 
-          // نحدث الـ State دائماً (حتى لو null) عشان نضمن ظهور البيانات المخزنة
-          if (isMounted) {
-            setProfile(data ?? null);
-          }
+      if (user && isMounted) {
+        setUserEmail(user.email || ""); // تحديث البريد الإلكتروني للحساب الحالي
+        
+        const data = await fetchProfileData(user.id);
+        if (isMounted) {
+          setProfile(data ?? null);
         }
-      };
+      }
+    };
 
-      loadData();
+    loadData();
 
-      return () => {
-        isMounted = false; // تنظيف لحماية الـ Memory
-      };
-    }, [session?.user?.id]),
-  );
-
+    return () => {
+      isMounted = false;
+    };
+  }, []) // تركها فارغة يعيد تشغيلها فور التركيز على شاشة الإعدادات
+);
   // في ملف settings.tsx
   useFocusEffect(
     useCallback(() => {
@@ -107,6 +112,11 @@ export default function Settings() {
       loadCache();
     }, []),
   );
+
+  const avatarUri =
+    profile?.avatar_url && profile.avatar_url.trim() !== ""
+      ? profile.avatar_url.split("?")[0]
+      : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
   const colorsOptions = [
     { id: "teal", hex: "#00B4D8", name: "أزرق مخضر" },
@@ -137,10 +147,7 @@ export default function Settings() {
             >
               <Image
                 source={{
-                  uri: profile?.avatar_url
-                    ? profile.avatar_url.split("?")[0]
-                    : "https://ui-avatars.com/api/?name=" +
-                      (profile?.username || "User"),
+                  uri: avatarUri,
                 }}
                 style={[styles.Image, { borderColor: mainColor }]}
                 cachePolicy="memory-disk"
@@ -361,7 +368,7 @@ export default function Settings() {
                     {t("changePassword")}
                   </Text>
                   <TouchableOpacity
-                    onPress={() => router.push('./ChangePassword')}
+                    onPress={() => router.push("./ChangePassword")}
                     style={[
                       styles.DeleteBtn,
                       { backgroundColor: theme.card, borderColor: mainColor },
@@ -444,9 +451,18 @@ export default function Settings() {
                       <View style={styles.modalButtons}>
                         <TouchableOpacity
                           style={[styles.LogoutBtn, { backgroundColor: "red" }]}
-                          onPress={() => {
-                            router.replace("../Auth/Login");
+                          onPress={async () => {
+                            // 1. إغلاق الـ Modal
                             setLogoutModal(false);
+
+                            // 2. تفريغ الملاحظات في Zustand فوراً بدون تخريب منطق الـ Offline
+                            useNotesStore.setState({ notes: [] });
+
+                            // 3. تسجيل الخروج من سوبابيس
+                            await supabase.auth.signOut();
+
+                            // 4. التوجيه لشاشة تسجيل الدخول
+                            router.replace("../Auth/Login");
                           }}
                         >
                           <Text style={{ color: "white", fontWeight: "bold" }}>
