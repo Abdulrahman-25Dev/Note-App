@@ -1,5 +1,4 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { router, useSegments } from "expo-router";
@@ -28,6 +27,7 @@ import { supabase } from "../supabase";
 
 export default function Settings() {
   const session = useAuthStore((state) => state.session);
+  const profile = useAuthStore((state) => state.profile);
   const { t, i18n } = useTranslation();
   const { isDarkMode, toggleDarkMode, setMainColor } = useThemeStore();
   const mainColor = useThemeStore((state) => state.mainColor);
@@ -39,12 +39,6 @@ export default function Settings() {
   const animatedValue = useRef(new Animated.Value(0)).current;
   const segments = useSegments();
   const currentTab = segments[1] || "settings";
-
-  const [profile, setProfile] = useState<{
-    username: string;
-    avatar_url: string;
-  } | null>(null);
-  const [userEmail, setUserEmail] = useState<string>("");
 
   // Modals
   const [logoutModal, setLogoutModal] = useState(false);
@@ -70,46 +64,39 @@ export default function Settings() {
   });
 
   // في ملف Settings.tsx
-useFocusEffect(
-  useCallback(() => {
-    let isMounted = true;
-
-    const loadData = async () => {
-      // جلب المستخدم الحالي مباشرة من الجلسة النشطة لمنع تداخل الحسابات
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (user && isMounted) {
-        setUserEmail(user.email || ""); // تحديث البريد الإلكتروني للحساب الحالي
-        
-        const data = await fetchProfileData(user.id);
-        if (isMounted) {
-          setProfile(data ?? null);
-        }
-      }
-    };
-
-    loadData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []) // تركها فارغة يعيد تشغيلها فور التركيز على شاشة الإعدادات
-);
-  // في ملف settings.tsx
   useFocusEffect(
     useCallback(() => {
-      const loadCache = async () => {
+      let isMounted = true;
+
+      const syncProfileIfOnline = async () => {
         try {
-          const cachedData = await AsyncStorage.getItem("@user_profile_data");
-          if (cachedData) {
-            setProfile(JSON.parse(cachedData)); // في settings.tsx توجد setProfile
+          // نستخدم الجلسة المحفوظة في Zustand بدلاً من استدعاء الشبكة من Supabase
+          const currentSession = useAuthStore.getState().session;
+
+          if (currentSession?.user && isMounted) {
+            // جلب البيانات من السيرفر فقط كمزامنة في الخلفية
+            const data = await fetchProfileData(currentSession.user.id);
+
+            if (isMounted && data) {
+              useAuthStore.getState().setProfile({
+                username: data.username || "مستخدم",
+                avatar_url: data.avatar_url || "",
+                email: currentSession.user.email || "",
+              });
+            }
           }
-        } catch (e) {
-          console.error(e);
+        } catch (error) {
+          // ⚡ السر هنا: التقاط خطأ الشبكة بصمت تماماً دون إظهاره للمستخدم
+          // التطبيق سيعتمد تلقائياً على البيانات المحفوظة سابقاً في Zustand
+          console.log("Offline mode active: using cached store profile");
         }
       };
 
-      loadCache();
+      syncProfileIfOnline();
+
+      return () => {
+        isMounted = false;
+      };
     }, []),
   );
 
@@ -165,7 +152,8 @@ useFocusEffect(
                     "مستخدم ريشة"}
                 </Text>
                 <Text style={{ color: theme.secondary }} ellipsizeMode="tail">
-                  {session?.user?.email || "غير مسجل"}
+                  {/* ⚡ القراءة من profile.email أولاً تضمن ظهور الإيميل أوفلاين ولحظياً بدون flicker */}
+                  {profile?.email || session?.user?.email || "غير مسجل"}
                 </Text>
               </View>
             </View>
@@ -452,16 +440,22 @@ useFocusEffect(
                         <TouchableOpacity
                           style={[styles.LogoutBtn, { backgroundColor: "red" }]}
                           onPress={async () => {
-                            // 1. إغلاق الـ Modal
                             setLogoutModal(false);
 
-                            // 2. تفريغ الملاحظات في Zustand فوراً بدون تخريب منطق الـ Offline
+                            // ⚡ 1. مسح ملاحظات الحساب القديم محلياً فوراً لمنع تسريبها للحساب التالي
                             useNotesStore.setState({ notes: [] });
 
-                            // 3. تسجيل الخروج من سوبابيس
-                            await supabase.auth.signOut();
+                            // ⚡ 2. مسح بيانات الجلسة والبروفايل
+                            useAuthStore.getState().clearAuth();
 
-                            // 4. التوجيه لشاشة تسجيل الدخول
+                            // 3. تسجيل الخروج من Supabase
+                            try {
+                              await supabase.auth.signOut();
+                            } catch (e) {
+                              // حماية أثناء وضع الأوفلاين
+                            }
+
+                            // 4. التوجيه لشاشة الدخول
                             router.replace("../Auth/Login");
                           }}
                         >

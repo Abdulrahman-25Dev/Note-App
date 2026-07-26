@@ -6,6 +6,7 @@ import * as ImagePicker from "expo-image-picker"; // استيراد مكتبة �
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuthStore } from "../store/useAuthStore";
 import {
   ActivityIndicator,
   Image,
@@ -102,50 +103,67 @@ const EditProfile = () => {
     }
   };
 
-  const handleSave = async () => {
-    try {
-      setSaving(true);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
+ const handleSave = async () => {
+  try {
+    setSaving(true);
 
-      let finalAvatarUrl = avatarUrl; // القيمة الافتراضية هي الرابط القديم
+    // 1. تحديد بيانات المستخدم مباشرة من الـ Store
+    const currentSession = useAuthStore.getState().session;
+    const userId = currentSession?.user?.id;
+    const currentEmail =
+      useAuthStore.getState().profile?.email ||
+      currentSession?.user?.email ||
+      "";
 
-      // ⚡ 1. تحديث مبدئي فوري محلياً بالصورة الاسم والمسار المحلي (UI سريع جداً)
-      if (localImageUri) {
-        // نحدث الـ Local Cache / Store بالـ Uri المحلي فوراً لكي يظهر بالخلفية
-        updateProfileData(user.id, username, localImageUri);
-      }
+    if (!userId) return;
 
-      // 2. إذا تم اختيار صورة جديدة محلياً، قم برفعها أولاً في الخلفية
-      if (localImageUri) {
-        try {
-          const uploadedUrl = await uploadAvatar(user.id, localImageUri);
-          // 🔄 إضافة timestamp لكسر كاش الصورة عند استلام الرابط الأونلاين
+    // ⚡ 2. تجهيز الصورة والتأكد من أنها ليست null لتفادي خطأ TypeScript
+    const displayAvatar = localImageUri || avatarUrl || "";
+
+    // ⚡ 3. تحديث الـ Store فوراً (0ms)
+    useAuthStore.getState().setProfile({
+      username: username,
+      avatar_url: displayAvatar,
+      email: currentEmail,
+    });
+
+    // 📣 4. إظهار تنبيه النجاح للمستخدم
+    showAlert({ title: t("success"), message: t("profileUpdated") });
+
+    // 🔙 5. العودة لشاشة الإعدادات
+    router.back();
+
+    // 🔄 6. المزامنة في الخلفية (رفع الصورة والتحديث في Supabase)
+    (async () => {
+      try {
+        let finalAvatarUrl = avatarUrl || "";
+
+        // رفع الصورة لو اختار المستخدم صورة جديدة
+        if (localImageUri) {
+          const uploadedUrl = await uploadAvatar(userId, localImageUri);
           finalAvatarUrl = `${uploadedUrl}?t=${Date.now()}`;
-        } catch (uploadError) {
-          console.error("Upload Error:", uploadError);
-          showAlert({ title: t("error"), message: t("uploadFailed") });
         }
+
+        // تحديث قاعدة البيانات في Supabase
+        await updateProfileData(userId, username, finalAvatarUrl);
+
+        // تحديث الـ Store برابط الصورة النهائي الأونلاين
+        useAuthStore.getState().setProfile({
+          username: username,
+          avatar_url: finalAvatarUrl,
+          email: currentEmail,
+        });
+      } catch (asyncErr) {
+        console.error("خطأ المزامنة بالخلفية:", asyncErr);
       }
-
-      // 3. تحديث بيانات البروفايل النهائية في قاعدة البيانات
-      await updateProfileData(user.id, username, finalAvatarUrl);
-
-      showAlert({ title: t("success"), message: t("profileUpdated") });
-
-      // تحديث الحالة النهائية في الواجهة
-      setAvatarUrl(finalAvatarUrl);
-      setLocalImageUri(null); // مسح المسار المحلي بعد الحفظ والرفع
-      router.back();
-    } catch (error) {
-      console.error(error);
-      showAlert({ title: t("error"), message: t("saveError") });
-    } finally {
-      setSaving(false);
-    }
-  };
+    })();
+  } catch (error) {
+    console.error(error);
+    showAlert({ title: t("error"), message: t("saveError") });
+  } finally {
+    setSaving(false);
+  }
+};
 
   if (loading)
     return <ActivityIndicator size="large" color="#fff" style={{ flex: 1 }} />;
