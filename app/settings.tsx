@@ -17,8 +17,8 @@ import {
 } from "react-native";
 import { Switch } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import SharedModal from "../components/sharedModal";
 import DrawerMenu from "../components/DrawerMenu";
+import SharedModal from "../components/sharedModal";
 import { Colors } from "../Constants/Colors";
 import { fetchProfileData } from "../profileService"; // تأكد من المسار الصحيح
 import { useAuthStore } from "../store/useAuthStore";
@@ -129,19 +129,33 @@ export default function Settings() {
         </View>
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <View style={[styles.content, { backgroundColor: theme.background }]}>
-            <View style={[styles.profileImage, { backgroundColor: theme.background }]}>
+            <View
+              style={[
+                styles.profileImage,
+                { backgroundColor: theme.background },
+              ]}
+            >
               <Image
                 source={{
                   uri: profile?.avatar_url
                     ? profile.avatar_url.split("?")[0]
-                    : "https://ui-avatars.com/api/?name=" + (profile?.username || "User"),
+                    : "https://ui-avatars.com/api/?name=" +
+                      (profile?.username || "User"),
                 }}
                 style={[styles.Image, { borderColor: mainColor }]}
                 cachePolicy="memory-disk"
               />
               <View style={[styles.profileInfo, { flexShrink: 1 }]}>
-                <Text style={{ fontSize: 16, fontWeight: "bold", color: theme.primary }}>
-                  {profile?.username || session?.user?.user_metadata?.full_name || "مستخدم ريشة"}
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "bold",
+                    color: theme.primary,
+                  }}
+                >
+                  {profile?.username ||
+                    session?.user?.user_metadata?.full_name ||
+                    "مستخدم ريشة"}
                 </Text>
                 <Text style={{ color: theme.secondary }} ellipsizeMode="tail">
                   {session?.user?.email || "غير مسجل"}
@@ -150,83 +164,305 @@ export default function Settings() {
             </View>
 
             <View style={styles.appearanceSection}>
-              <Text style={[styles.sectionTitle, { color: theme.secondary, textAlign: isRTL ? "right" : "left" }]}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  {
+                    color: theme.secondary,
+                    textAlign: isRTL ? "right" : "left",
+                  },
+                ]}
+              >
                 {t("appearance")}
               </Text>
-              <View style={[styles.optionsContainer, { borderColor: theme.borders, backgroundColor: theme.card }]}>
-                <View style={[styles.options, { flexDirection: isRTL ? "row-reverse" : "row" }, { backgroundColor: theme.card, borderColor: theme.borders, borderRadius: 30 }]}>
-                  <Text style={[styles.optionText, { color: theme.primary }]}>{t("theme")}</Text>
-                  <Switch style={styles.switch} trackColor={{ false: "#767577", true: mainColor }} thumbColor={isDarkMode ? theme.primary : "#f4f3f4"} value={isDarkMode} onValueChange={toggleDarkMode} />
+              <View
+                style={[
+                  styles.optionsContainer,
+                  { borderColor: theme.borders, backgroundColor: theme.card },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.options,
+                    { flexDirection: isRTL ? "row-reverse" : "row" },
+                    {
+                      backgroundColor: theme.card,
+                      borderColor: theme.borders,
+                      borderRadius: 30,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                    {t("theme")}
+                  </Text>
+                  <Switch
+                    style={styles.switch}
+                    trackColor={{ false: "#767577", true: mainColor }}
+                    thumbColor={isDarkMode ? theme.primary : "#f4f3f4"}
+                    value={isDarkMode}
+                    onValueChange={toggleDarkMode}
+                  />
                 </View>
-                <View style={[styles.Line, { backgroundColor: theme.borders }]} />
-                <View style={[styles.options, { flexDirection: isRTL ? "row-reverse" : "row" }, { backgroundColor: theme.card, borderColor: theme.borders }]}>
-                  <Text style={[styles.optionText, { color: theme.primary }]}>{t("appColor")}</Text>
-                  <View style={[styles.colorsRow, { flexDirection: isRTL ? "row" : "row-reverse" }]}>
+                <View
+                  style={[styles.Line, { backgroundColor: theme.borders }]}
+                />
+                <View
+                  style={[
+                    styles.options,
+                    { flexDirection: isRTL ? "row-reverse" : "row" },
+                    { backgroundColor: theme.card, borderColor: theme.borders },
+                  ]}
+                >
+                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                    {t("appColor")}
+                  </Text>
+                  <View
+                    style={[
+                      styles.colorsRow,
+                      { flexDirection: isRTL ? "row" : "row-reverse" },
+                    ]}
+                  >
                     {colorsOptions.map((color) => {
                       const isSelected = mainColor === color.hex;
                       return (
-                        <TouchableOpacity key={color.id} style={[styles.colorCircle, { backgroundColor: color.hex }]} onPress={() => setMainColor(color.id as any)}>
-                          {isSelected && <Ionicons name="checkmark" size={24} color={theme.primary} style={{ position: "absolute", top: 0, right: 0 }} />}
+                        <TouchableOpacity
+                          key={color.id}
+                          style={[
+                            styles.colorCircle,
+                            { backgroundColor: color.hex },
+                          ]}
+                          onPress={() => setMainColor(color.id as any)}
+                        >
+                          {isSelected && (
+                            <Ionicons
+                              name="checkmark"
+                              size={24}
+                              color={theme.primary}
+                              style={{ position: "absolute", top: 0, right: 0 }}
+                            />
+                          )}
                         </TouchableOpacity>
                       );
                     })}
                   </View>
                 </View>
-                <View style={[styles.Line, { backgroundColor: theme.borders }]} />
-                <View style={[styles.options, { flexDirection: isRTL ? "row-reverse" : "row" }, { backgroundColor: theme.card, borderColor: theme.borders }]}>
-                  <Text style={[styles.optionText, { color: theme.primary }]}>{t("language")}</Text>
+                <View
+                  style={[styles.Line, { backgroundColor: theme.borders }]}
+                />
+                <View
+                  style={[
+                    styles.options,
+                    { flexDirection: isRTL ? "row-reverse" : "row" },
+                    { backgroundColor: theme.card, borderColor: theme.borders },
+                  ]}
+                >
+                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                    {t("language")}
+                  </Text>
                   <View style={styles.languageRow}>
-                    <TouchableOpacity style={[styles.Lang, i18n.language === "ar" ? { borderColor: mainColor } : { borderColor: theme.borders }]} onPress={() => { useThemeStore.getState().setLanguage("ar"); i18n.changeLanguage("ar"); }}>
-                      <Text style={[styles.optionText, { color: theme.primary, fontWeight: "bold" }]}>ع</Text>
+                    <TouchableOpacity
+                      style={[
+                        styles.Lang,
+                        i18n.language === "ar"
+                          ? { borderColor: mainColor }
+                          : { borderColor: theme.borders },
+                      ]}
+                      onPress={() => {
+                        useThemeStore.getState().setLanguage("ar");
+                        i18n.changeLanguage("ar");
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.optionText,
+                          { color: theme.primary, fontWeight: "bold" },
+                        ]}
+                      >
+                        ع
+                      </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.Lang, i18n.language === "en" ? { borderColor: mainColor } : { borderColor: theme.borders }]} onPress={() => { useThemeStore.getState().setLanguage("en"); i18n.changeLanguage("en"); }}>
-                      <Text style={[styles.optionText, { color: theme.primary, fontWeight: "bold" }]}>En</Text>
+                    <TouchableOpacity
+                      style={[
+                        styles.Lang,
+                        i18n.language === "en"
+                          ? { borderColor: mainColor }
+                          : { borderColor: theme.borders },
+                      ]}
+                      onPress={() => {
+                        useThemeStore.getState().setLanguage("en");
+                        i18n.changeLanguage("en");
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.optionText,
+                          { color: theme.primary, fontWeight: "bold" },
+                        ]}
+                      >
+                        En
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
               </View>
             </View>
             <View style={styles.dataManagementSection}>
-              <Text style={[styles.sectionTitle, { color: theme.secondary, marginRight: 20, textAlign: isRTL ? "right" : "left" }]}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  {
+                    color: theme.secondary,
+                    marginRight: 20,
+                    textAlign: isRTL ? "right" : "left",
+                  },
+                ]}
+              >
                 {t("AccountManagement")}
               </Text>
-              <View style={[styles.optionsContainer2, { borderColor: theme.borders, backgroundColor: theme.card }]}>
-                <View style={[styles.options, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                  <Text style={[styles.optionText, { color: theme.primary }]}>{t("editProfile")}</Text>
-                  <TouchableOpacity onPress={() => router.push("./EditProfile")} style={[styles.DeleteBtn, { backgroundColor: theme.card, borderColor: mainColor }]}>
-                    <Ionicons name="person-outline" size={24} color={mainColor} />
+              <View
+                style={[
+                  styles.optionsContainer2,
+                  { borderColor: theme.borders, backgroundColor: theme.card },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.options,
+                    { flexDirection: isRTL ? "row-reverse" : "row" },
+                  ]}
+                >
+                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                    {t("editProfile")}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => router.push("./EditProfile")}
+                    style={[
+                      styles.DeleteBtn,
+                      { backgroundColor: theme.card, borderColor: mainColor },
+                    ]}
+                  >
+                    <Ionicons
+                      name="person-outline"
+                      size={24}
+                      color={mainColor}
+                    />
                   </TouchableOpacity>
                 </View>
-                <View style={[styles.Line, { backgroundColor: theme.borders }]} />
-                <View style={[styles.options, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                  <Text style={[styles.optionText, { color: theme.primary }]}>{t("changePassword")}</Text>
-                  <TouchableOpacity style={[styles.DeleteBtn, { backgroundColor: theme.card, borderColor: mainColor }]}>
-                    <Ionicons name="lock-closed-outline" size={24} color={mainColor} />
+                <View
+                  style={[styles.Line, { backgroundColor: theme.borders }]}
+                />
+                <View
+                  style={[
+                    styles.options,
+                    { flexDirection: isRTL ? "row-reverse" : "row" },
+                  ]}
+                >
+                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                    {t("changePassword")}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => router.push('./ChangePassword')}
+                    style={[
+                      styles.DeleteBtn,
+                      { backgroundColor: theme.card, borderColor: mainColor },
+                    ]}
+                  >
+                    <Ionicons
+                      name="lock-closed-outline"
+                      size={24}
+                      color={mainColor}
+                    />
                   </TouchableOpacity>
                 </View>
-                <View style={[styles.Line, { backgroundColor: theme.borders }]} />
-                <View style={[styles.options, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                  <Text style={[styles.optionText, { color: theme.primary }]}>{t("deleteAccount")}</Text>
-                  <TouchableOpacity style={[styles.DeleteBtn, { backgroundColor: "red", borderColor: theme.borders }]}>
+                <View
+                  style={[styles.Line, { backgroundColor: theme.borders }]}
+                />
+                <View
+                  style={[
+                    styles.options,
+                    { flexDirection: isRTL ? "row-reverse" : "row" },
+                  ]}
+                >
+                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                    {t("deleteAccount")}
+                  </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.DeleteBtn,
+                      { backgroundColor: "red", borderColor: theme.borders },
+                    ]}
+                  >
                     <Ionicons name="trash-outline" size={24} color={"white"} />
                   </TouchableOpacity>
                 </View>
-                <View style={[styles.Line, { backgroundColor: theme.borders }]} />
-                <View style={[styles.options, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                  <Text style={[styles.optionText, { color: theme.primary }]}>{t("Logout")}</Text>
-                  <TouchableOpacity onPress={() => setLogoutModal(true)} style={[styles.DeleteBtn, { backgroundColor: "red", borderColor: theme.borders }]}>
-                    <Ionicons name="log-out-outline" size={24} color={"white"} />
+                <View
+                  style={[styles.Line, { backgroundColor: theme.borders }]}
+                />
+                <View
+                  style={[
+                    styles.options,
+                    { flexDirection: isRTL ? "row-reverse" : "row" },
+                  ]}
+                >
+                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                    {t("Logout")}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setLogoutModal(true)}
+                    style={[
+                      styles.DeleteBtn,
+                      { backgroundColor: "red", borderColor: theme.borders },
+                    ]}
+                  >
+                    <Ionicons
+                      name="log-out-outline"
+                      size={24}
+                      color={"white"}
+                    />
                   </TouchableOpacity>
-                  <SharedModal visible={logoutModal} onRequestClose={() => setLogoutModal(false)} onClose={() => setLogoutModal(false)}>
-                    <View style={[styles.modalContainer, { backgroundColor: theme.card }]}>
-                      <Text style={[styles.titleModal, { color: theme.primary }]}>{t("Logout")}</Text>
-                      <Text style={[styles.textModal, { color: theme.primary }]}>{t("sureLogout")}</Text>
+                  <SharedModal
+                    visible={logoutModal}
+                    onRequestClose={() => setLogoutModal(false)}
+                    onClose={() => setLogoutModal(false)}
+                  >
+                    <View
+                      style={[
+                        styles.modalContainer,
+                        { backgroundColor: theme.card },
+                      ]}
+                    >
+                      <Text
+                        style={[styles.titleModal, { color: theme.primary }]}
+                      >
+                        {t("Logout")}
+                      </Text>
+                      <Text
+                        style={[styles.textModal, { color: theme.primary }]}
+                      >
+                        {t("sureLogout")}
+                      </Text>
                       <View style={styles.modalButtons}>
-                        <TouchableOpacity style={[styles.LogoutBtn, { backgroundColor: "red" }]} onPress={() => { router.replace("../Auth/Login"); setLogoutModal(false); }}>
-                          <Text style={{ color: "white", fontWeight: "bold" }}>{t("Logout")}</Text>
+                        <TouchableOpacity
+                          style={[styles.LogoutBtn, { backgroundColor: "red" }]}
+                          onPress={() => {
+                            router.replace("../Auth/Login");
+                            setLogoutModal(false);
+                          }}
+                        >
+                          <Text style={{ color: "white", fontWeight: "bold" }}>
+                            {t("Logout")}
+                          </Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={[styles.CancelBtn, { backgroundColor: "#3B82F6" }]} onPress={() => setLogoutModal(false)}>
-                          <Text style={{ color: "white", fontWeight: "bold" }}>{t("CAN")}</Text>
+                        <TouchableOpacity
+                          style={[
+                            styles.CancelBtn,
+                            { backgroundColor: "#3B82F6" },
+                          ]}
+                          onPress={() => setLogoutModal(false)}
+                        >
+                          <Text style={{ color: "white", fontWeight: "bold" }}>
+                            {t("CAN")}
+                          </Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -236,12 +472,34 @@ export default function Settings() {
             </View>
 
             <View style={styles.AboutAppSection}>
-              <Text style={[styles.sectionTitle, { color: theme.secondary, marginRight: 20, textAlign: isRTL ? "right" : "left" }]}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  {
+                    color: theme.secondary,
+                    marginRight: 20,
+                    textAlign: isRTL ? "right" : "left",
+                  },
+                ]}
+              >
                 {t("aboutApp")}
               </Text>
-              <View style={[styles.optionsContainer2, { borderColor: theme.borders, backgroundColor: theme.card }]}>
-                <Pressable onPress={() => router.push("./about")} style={[styles.options, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                  <Text style={[styles.optionText, { color: theme.primary }]}>{t("aboutApp")}</Text>
+              <View
+                style={[
+                  styles.optionsContainer2,
+                  { borderColor: theme.borders, backgroundColor: theme.card },
+                ]}
+              >
+                <Pressable
+                  onPress={() => router.push("./about")}
+                  style={[
+                    styles.options,
+                    { flexDirection: isRTL ? "row-reverse" : "row" },
+                  ]}
+                >
+                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                    {t("aboutApp")}
+                  </Text>
                   <Feather name="info" size={24} color={mainColor} />
                 </Pressable>
               </View>
