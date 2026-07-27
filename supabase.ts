@@ -16,8 +16,8 @@ const ExpoSecureStoreAdapter = {
 };
 
 // ضع هنا القيم الخاصة بمشروعك التي حصلنا عليها
-const SUPABASE_URL = "https://hnadbzlgnyxfbpaaljap.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_Dl734ItIqDvAtCHgypV6cQ_QxMkCK_u";
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {

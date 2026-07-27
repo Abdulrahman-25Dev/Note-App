@@ -33,7 +33,17 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
+      # 🔑 التعديل هنا: إنشاء ملف .env تلقائياً قبل البناء
+      - name: 🔑 Inject Environment Variables
+        run: |
+          echo "EXPO_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}" >> .env
+          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}" >> .env
+
+      # 🚀 التعديل هنا: تمرير المتغيرات لأمر EAS Build
       - name: 🚀 Build Local APK via EAS
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
         run: npx eas-cli build --platform android --profile preview --local --non-interactive
 
       - name: 📤 Upload APK Artifact
