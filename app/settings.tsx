@@ -6,6 +6,7 @@ import { router, useSegments } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  Alert,
   Animated,
   Dimensions,
   Pressable,
@@ -26,6 +27,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useNotesStore } from "../store/useNotesStore";
 import { useThemeStore } from "../store/useThemeStore";
 import { supabase } from "../supabase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Settings() {
   const session = useAuthStore((state) => state.session);
@@ -79,7 +81,7 @@ export default function Settings() {
             // جلب البيانات من السيرفر فقط كمزامنة في الخلفية
             const data = await fetchProfileData(currentSession.user.id);
 
-            if (isMounted && data) {
+            if (isMounted && data) { 
               useAuthStore.getState().setProfile({
                 username: data.username || "مستخدم",
                 avatar_url: data.avatar_url || "",
@@ -118,10 +120,49 @@ export default function Settings() {
     } catch {}
   };
 
+
+const handleDeleteAccount = () => {
+  showAlert({
+    title: "حذف الحساب نهائياً ⚠️",
+    message: "هل أنت متأكد؟ سيتم مسح جميع بياناتك وملاحظاتك ولا يمكن استعادتها.",
+    buttons: [
+      { text: "إلغاء", style: "cancel" },
+      {
+        text: "حذف",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (user) {
+              await supabase.from('notes').delete().eq('user_id', user.id);
+              await supabase.rpc('delete_user');
+            }
+
+            await AsyncStorage.clear();
+            await supabase.auth.signOut();
+
+            showAlert({
+              title: "تم",
+              message: "تم حذف الحساب بنجاح.",
+            });
+            router.replace("./Auth/Login");
+          } catch (error: any) {
+            showAlert({
+              title: "خطأ",
+              message: error.message || "حدث خطأ أثناء حذف الحساب",
+            });
+          }
+        },
+      },
+    ],
+  });
+};
+
   const avatarUri =
     profile?.avatar_url && profile.avatar_url.trim() !== ""
       ? profile.avatar_url.split("?")[0]
-      : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+      : "https://cdn-icons-png.flaticon.com/128/9131/9131646.png";
 
   const colorsOptions = [
     { id: "teal", hex: "#00B4D8", name: "أزرق مخضر" },
@@ -402,6 +443,7 @@ export default function Settings() {
                     {t("deleteAccount")}
                   </Text>
                   <TouchableOpacity
+                    onPress={handleDeleteAccount}
                     style={[
                       styles.DeleteBtn,
                       { backgroundColor: "red", borderColor: theme.borders },

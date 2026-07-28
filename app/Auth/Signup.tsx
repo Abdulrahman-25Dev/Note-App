@@ -11,6 +11,7 @@ import { TextInput } from "react-native-paper";
 import { router } from "expo-router";
 // 1. استيراد عميل سوبابيس من ملف الإعداد الخاص بك
 import { supabase } from "../../supabase"; // تأكد من مطابقة المسار الفعلي لملف supabase.ts
+import { useAlertStore } from "../../store/useAlertStore";
 
 const Signup = () => {
   const [email, setEmail] = useState<string>("");
@@ -19,6 +20,8 @@ const Signup = () => {
   const [showPassword1, setShowPassword1] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [fullName, setFullName] = useState<string>(""); // حالة التحميل أثناء الاتصال بالسيرفر
+
+  const showAlert = useAlertStore((s) => s.showAlert);
 
   // 2. تحديث الدالة لتتصل بـ Supabase سحابياً
   const handleSignup = async () => {
@@ -53,7 +56,7 @@ const Signup = () => {
         if (data.user) {
           const { error: profileError } = await supabase
             .from('profiles')
-            .insert([
+            .upsert([
               { 
                 id: data.user.id, 
                 username: fullName,
@@ -65,9 +68,10 @@ const Signup = () => {
             console.error("خطأ في إنشاء البروفايل:", profileError.message);
           }
         }
-        alert(
-          "تم إنشاء الحساب بنجاح! إذا تطلب الأمر تفعيل البريد، يرجى مراجعة صندوق الوارد الخاص بك.",
-        );
+        showAlert({
+          title: "نجاح",
+          message: "تم إنشاء الحساب بنجاح! إذا تطلب الأمر تفعيل البريد، يرجى مراجعة صندوق الوارد الخاص بك.",
+        });
         // بعد نجاح التسجيل، نوجه المستخدم تلقائياً للواجهة الرئيسية أو شاشة الدخول
         router.replace("/");
       }
