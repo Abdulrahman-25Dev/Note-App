@@ -95,5 +95,6 @@
   "profileUpdated": "Profile updated successfully",
   "saveError": "An error occurred while saving data.",
   "offline": "No Internet Connection",
-  "offlineAccessError": "Internet connection is required to access this screen."
+  "offlineAccessError": "Internet connection is required to access this screen.",
+  "emptyNote": "Please fill in all fields."
 }

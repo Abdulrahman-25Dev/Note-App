@@ -17,6 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../Constants/Colors";
 import { useNotesStore } from "../../store/useNotesStore";
 import { useThemeStore } from "../../store/useThemeStore";
+import { useAlertStore } from "../../store/useAlertStore";
 
 const Add = () => {
   const { t } = useTranslation();
@@ -26,6 +27,8 @@ const Add = () => {
   const { isDarkMode, mainColor } = useThemeStore();
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
+  const showAlert = useAlertStore((s) => s.showAlert);
+
   useEffect(() => {
     setTimeout(() => {
       titleRef.current?.focus();
@@ -34,7 +37,10 @@ const Add = () => {
   const addNote = useNotesStore((s) => s.addNote);
   const handleSave = async () => {
     if (!title || !content) {
-      alert("Please fill all the fields");
+      showAlert({
+        title: t("error"),
+        message: t("emptyNote"),
+      });
       return;
     }
     addNote({ title, content });

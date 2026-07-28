@@ -66,7 +66,7 @@ const Details = () => {
 
   const shareNote = async () => {
     await Share.share({
-      message: `${note?.title}\n\n${note?.content}`,
+      message: `*${note?.title}*\n\n${note?.content}`,
       title: note?.title || "",
     });
   };
