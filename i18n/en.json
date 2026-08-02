@@ -96,6 +96,14 @@
   "saveError": "An error occurred while saving data.",
   "offline": "No Internet Connection",
   "offlineAccessError": "Internet connection is required to access this screen.",
+  "needInternetDeleteAccount": "An internet connection is required to delete your account and permanently remove your data from the server.",
+  "deleteAccountConfirmTitle": "Delete Account Permanently ⚠️",
+  "deleteAccountConfirmMessage": "Are you sure? All your data and notes will be permanently removed and cannot be recovered.",
+  "deleteAccountSuccess": "Account deleted successfully.",
+  "deleteAccountError": "An error occurred while deleting the account.",
+  "needInternet": "You must be connected to the internet to perform this action.",
+  "networkCheckFailedTitle": "Notice",
+  "networkCheckFailedMessage": "Failed to verify network status. Please check your connection and try again.",
   "chooseColor": "Choose a color",
   "emptyNote": "Please fill in all fields."
 }

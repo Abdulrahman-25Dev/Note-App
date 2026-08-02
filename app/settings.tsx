@@ -54,7 +54,6 @@ export default function Settings() {
   const [selectedColor, setSelectedColor] = useState(mainColor);
 
   // Modals
-  const [logoutModal, setLogoutModal] = useState(false);
 
   useEffect(() => {
     console.log("حالة الجلسة الحالية:", session);
@@ -75,6 +74,21 @@ export default function Settings() {
     inputRange: [0, 1],
     outputRange: isRTL ? [width, 0] : [-width, 0],
   });
+
+  const getContrastingColor = (hexColor: string) => {
+    try {
+      const hex = hexColor.replace('#', '');
+      const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+      const bigint = parseInt(fullHex, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+      return brightness > 128 ? '#000000' : '#FFFFFF';
+    } catch (e) {
+      return '#FFFFFF';
+    }
+  };
 
   // في ملف Settings.tsx
   useFocusEffect(
@@ -129,15 +143,35 @@ export default function Settings() {
     } catch {}
   };
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = async () => {
+    // 1. فحص الاتصال بالإنترنت مع التعامل مع أي أخطاء متوقعة
+    try {
+      const netState = await NetInfo.fetch();
+
+      if (!netState.isConnected) {
+        showAlert({
+          title: t("offline"),
+          message: t("needInternetDeleteAccount"),
+        });
+        return;
+      }
+    } catch (netError) {
+      console.log("NetInfo Check Failed:", netError);
+      showAlert({
+        title: t("networkCheckFailedTitle"),
+        message: t("networkCheckFailedMessage"),
+      });
+      return;
+    }
+
+    // 2. تأكيد الحذف في حال وجود اتصال واستجابة سليمة
     showAlert({
-      title: "حذف الحساب نهائياً ⚠️",
-      message:
-        "هل أنت متأكد؟ سيتم مسح جميع بياناتك وملاحظاتك ولا يمكن استعادتها.",
+      title: t("deleteAccountConfirmTitle"),
+      message: t("deleteAccountConfirmMessage"),
       buttons: [
-        { text: "إلغاء", style: "cancel" },
+        { text: t("CAN"), style: "cancel" },
         {
-          text: "حذف",
+          text: t("DEL"),
           style: "destructive",
           onPress: async () => {
             try {
@@ -154,14 +188,14 @@ export default function Settings() {
               await supabase.auth.signOut();
 
               showAlert({
-                title: "تم",
-                message: "تم حذف الحساب بنجاح.",
+                title: t("success"),
+                message: t("deleteAccountSuccess"),
               });
               router.replace("./Auth/Login");
             } catch (error: any) {
               showAlert({
-                title: "خطأ",
-                message: error.message || "حدث خطأ أثناء حذف الحساب",
+                title: t("error"),
+                message: error.message || t("deleteAccountError"),
               });
             }
           },
@@ -499,7 +533,72 @@ export default function Settings() {
                     {t("Logout")}
                   </Text>
                   <TouchableOpacity
-                    onPress={() => setLogoutModal(true)}
+                    onPress={async () => {
+                      try {
+                        const netState = await NetInfo.fetch();
+                        const isConnected = !!netState?.isConnected;
+
+                        if (!isConnected) {
+                          showAlert({
+                            title: t("offline"),
+                            message: t("needInternet"),
+                          });
+                          return;
+                        }
+                      } catch (e) {
+                        console.log("NetInfo.fetch failed:", e);
+                        showAlert({
+                          title: t("offline"),
+                          message: t("needInternet"),
+                        });
+                        return;
+                      }
+
+                      showAlert({
+                        title: t("Logout"),
+                        message: t("sureLogout"),
+                        buttons: [
+                          { text: t("CAN"), style: "cancel" },
+                          {
+                            text: t("Logout"),
+                            style: "destructive",
+                            onPress: async () => {
+                              // Immediately clear local notes and auth
+                              try {
+                                useNotesStore.setState({ notes: [] });
+                              } catch (e) {
+                                console.log("Failed to clear notes store:", e);
+                              }
+
+                              try {
+                                useAuthStore.getState().clearAuth();
+                              } catch (e) {
+                                console.log("Failed to clear auth store:", e);
+                              }
+
+                              // Attempt remote sign-out but don't block if it fails
+                              try {
+                                await supabase.auth.signOut();
+                              } catch (e) {
+                                console.log("supabase.signOut() failed:", e);
+                              }
+
+                              try {
+                                await AsyncStorage.clear();
+                              } catch (e) {
+                                console.log("AsyncStorage.clear() failed:", e);
+                              }
+
+                              try {
+                                router.replace("../Auth/Login");
+                              } catch (e) {
+                                console.log("Navigation to Login failed:", e);
+                              }
+                            },
+                          },
+                        ],
+                      });
+                    }}
                     style={[
                       styles.DeleteBtn,
                       { backgroundColor: "red", borderColor: theme.borders },
@@ -511,68 +610,6 @@ export default function Settings() {
                       color={"white"}
                     />
                   </TouchableOpacity>
-                  <SharedModal
-                    visible={logoutModal}
-                    onRequestClose={() => setLogoutModal(false)}
-                    onClose={() => setLogoutModal(false)}
-                  >
-                    <View
-                      style={[
-                        styles.modalContainer,
-                        { backgroundColor: theme.card },
-                      ]}
-                    >
-                      <Text
-                        style={[styles.titleModal, { color: theme.primary }]}
-                      >
-                        {t("Logout")}
-                      </Text>
-                      <Text
-                        style={[styles.textModal, { color: theme.primary }]}
-                      >
-                        {t("sureLogout")}
-                      </Text>
-                      <View style={styles.modalButtons}>
-                        <TouchableOpacity
-                          style={[styles.LogoutBtn, { backgroundColor: "red" }]}
-                          onPress={async () => {
-                            setLogoutModal(false);
-
-                            // ⚡ 1. مسح ملاحظات الحساب القديم محلياً فوراً لمنع تسريبها للحساب التالي
-                            useNotesStore.setState({ notes: [] });
-
-                            // ⚡ 2. مسح بيانات الجلسة والبروفايل
-                            useAuthStore.getState().clearAuth();
-
-                            // 3. تسجيل الخروج من Supabase
-                            try {
-                              await supabase.auth.signOut();
-                            } catch (e) {
-                              // حماية أثناء وضع الأوفلاين
-                            }
-
-                            // 4. التوجيه لشاشة الدخول
-                            router.replace("../Auth/Login");
-                          }}
-                        >
-                          <Text style={{ color: "white", fontWeight: "bold" }}>
-                            {t("Logout")}
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[
-                            styles.CancelBtn,
-                            { backgroundColor: "#3B82F6" },
-                          ]}
-                          onPress={() => setLogoutModal(false)}
-                        >
-                          <Text style={{ color: "white", fontWeight: "bold" }}>
-                            {t("CAN")}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </SharedModal>
                 </View>
               </View>
             </View>
@@ -617,7 +654,7 @@ export default function Settings() {
                       setColorPickerVisible(false);
                     }}
                   >
-                    <Text style={{ color: "white", fontWeight: "bold" }}>
+                    <Text style={{ color: getContrastingColor(mainColor), fontWeight: "bold" }}>
                       {t("save")}
                     </Text>
                   </TouchableOpacity>

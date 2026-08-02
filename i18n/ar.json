@@ -96,6 +96,14 @@
   "saveError": "حدث خطأ أثناء محاولة حفظ البيانات.",
   "offline": "لا يوجد اتصال بالإنترنت",
   "offlineAccessError": "الاتصال بالإنترنت مطلوب للوصول إلى هذه الشاشة.",
+  "needInternetDeleteAccount": "يلزم الاتصال بالإنترنت لحذف الحساب ومسح بياناتك نهائياً من السيرفر.",
+  "deleteAccountConfirmTitle": "حذف الحساب نهائياً ⚠️",
+  "deleteAccountConfirmMessage": "هل أنت متأكد؟ سيتم مسح جميع بياناتك وملاحظاتك ولا يمكن استعادتها.",
+  "deleteAccountSuccess": "تم حذف الحساب بنجاح.",
+  "deleteAccountError": "حدث خطأ أثناء حذف الحساب.",
+  "needInternet": "يجب الاتصال بالإنترنت لإتمام هذا الإجراء",
+  "networkCheckFailedTitle": "تنبيه ⚠️",
+  "networkCheckFailedMessage": "تعذر التحقق من حالة الاتصال. يرجى التأكد من اتصالك بالإنترنت والمحاولة لاحقاً.",
   "chooseColor": "اختر اللون",
   "emptyNote": "يرجى ملء جميع الحقول."
 }

@@ -25,6 +25,7 @@ import {
 import { useAlertStore } from "../store/useAlertStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { supabase } from "../supabase";
+import i18n from "@/i18n/i18n";
 
 const EditProfile = () => {
   const [username, setUsername] = useState("");
@@ -174,6 +175,8 @@ const EditProfile = () => {
     }
   };
 
+  const isRTL = i18n.language === "ar"; // التحقق من اتجاه اللغة
+
   if (loading)
     return <ActivityIndicator size="large" color="#fff" style={{ flex: 1 }} />;
 
@@ -209,7 +212,7 @@ const EditProfile = () => {
         </TouchableOpacity>
 
         {/* جزء الاسم */}
-        <Text style={styles.label}>{t("username")}</Text>
+        <Text style={[styles.label, isRTL && { textAlign: "right" }]}>{t("username")}</Text>
         <TextInput
           style={styles.input}
           value={username}

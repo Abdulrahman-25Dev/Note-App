@@ -43,6 +43,21 @@ const Favorites = () => {
 
   const mainColor = useThemeStore((state) => state.mainColor);
 
+  const getContrastingColor = (hexColor: string) => {
+    try {
+      const hex = hexColor.replace('#', '');
+      const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+      const bigint = parseInt(fullHex, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+      return brightness > 128 ? '#000000' : '#FFFFFF';
+    } catch (e) {
+      return '#FFFFFF';
+    }
+  };
+
   // حالة الملاحظات المفضلة  // حالة البحث
   const [search, setSearch] = useState<string>("");
   const [showClearFavoritesModal, setShowClearFavoritesModal] = useState(false);
@@ -125,7 +140,7 @@ const Favorites = () => {
                   <Text style={[styles.noteContent, { color: theme.secondary }]} numberOfLines={1}>{item.content}</Text>
                   <View style={styles.noteActions}>
                     <TouchableOpacity style={[styles.removeButton, { backgroundColor: mainColor }]} onPress={() => toggleFavorite(item.id)}>
-                      <Ionicons name="heart-dislike" size={20} color="#fff" />
+                      <Ionicons name="heart-dislike" size={20} color={getContrastingColor(mainColor)} />
                     </TouchableOpacity>
                   </View>
                 </View>
