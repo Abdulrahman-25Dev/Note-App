@@ -96,5 +96,6 @@
   "saveError": "An error occurred while saving data.",
   "offline": "No Internet Connection",
   "offlineAccessError": "Internet connection is required to access this screen.",
+  "chooseColor": "Choose a color",
   "emptyNote": "Please fill in all fields."
 }

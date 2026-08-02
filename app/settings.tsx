@@ -28,13 +28,20 @@ import { useNotesStore } from "../store/useNotesStore";
 import { useThemeStore } from "../store/useThemeStore";
 import { supabase } from "../supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import ColorPicker, {
+  Panel1,
+  HueSlider,
+  Preview,
+} from "reanimated-color-picker";
 
 export default function Settings() {
   const session = useAuthStore((state) => state.session);
   const profile = useAuthStore((state) => state.profile);
   const { t, i18n } = useTranslation();
-  const { isDarkMode, toggleDarkMode, setMainColor } = useThemeStore();
+  const { isDarkMode, toggleDarkMode, setMainColor, setCustomColor } =
+    useThemeStore();
   const mainColor = useThemeStore((state) => state.mainColor);
+  const colorKey = useThemeStore((state) => state.colorKey);
   const theme = isDarkMode ? Colors.dark : Colors.light;
   const isRTL = i18n.language === "ar";
 
@@ -43,6 +50,8 @@ export default function Settings() {
   const animatedValue = useRef(new Animated.Value(0)).current;
   const segments = useSegments();
   const currentTab = segments[1] || "settings";
+  const [colorPickerVisible, setColorPickerVisible] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(mainColor);
 
   // Modals
   const [logoutModal, setLogoutModal] = useState(false);
@@ -81,7 +90,7 @@ export default function Settings() {
             // جلب البيانات من السيرفر فقط كمزامنة في الخلفية
             const data = await fetchProfileData(currentSession.user.id);
 
-            if (isMounted && data) { 
+            if (isMounted && data) {
               useAuthStore.getState().setProfile({
                 username: data.username || "مستخدم",
                 avatar_url: data.avatar_url || "",
@@ -120,44 +129,46 @@ export default function Settings() {
     } catch {}
   };
 
+  const handleDeleteAccount = () => {
+    showAlert({
+      title: "حذف الحساب نهائياً ⚠️",
+      message:
+        "هل أنت متأكد؟ سيتم مسح جميع بياناتك وملاحظاتك ولا يمكن استعادتها.",
+      buttons: [
+        { text: "إلغاء", style: "cancel" },
+        {
+          text: "حذف",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const {
+                data: { user },
+              } = await supabase.auth.getUser();
 
-const handleDeleteAccount = () => {
-  showAlert({
-    title: "حذف الحساب نهائياً ⚠️",
-    message: "هل أنت متأكد؟ سيتم مسح جميع بياناتك وملاحظاتك ولا يمكن استعادتها.",
-    buttons: [
-      { text: "إلغاء", style: "cancel" },
-      {
-        text: "حذف",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                await supabase.from("notes").delete().eq("user_id", user.id);
+                await supabase.rpc("delete_user");
+              }
 
-            if (user) {
-              await supabase.from('notes').delete().eq('user_id', user.id);
-              await supabase.rpc('delete_user');
+              await AsyncStorage.clear();
+              await supabase.auth.signOut();
+
+              showAlert({
+                title: "تم",
+                message: "تم حذف الحساب بنجاح.",
+              });
+              router.replace("./Auth/Login");
+            } catch (error: any) {
+              showAlert({
+                title: "خطأ",
+                message: error.message || "حدث خطأ أثناء حذف الحساب",
+              });
             }
-
-            await AsyncStorage.clear();
-            await supabase.auth.signOut();
-
-            showAlert({
-              title: "تم",
-              message: "تم حذف الحساب بنجاح.",
-            });
-            router.replace("./Auth/Login");
-          } catch (error: any) {
-            showAlert({
-              title: "خطأ",
-              message: error.message || "حدث خطأ أثناء حذف الحساب",
-            });
-          }
+          },
         },
-      },
-    ],
-  });
-};
+      ],
+    });
+  };
 
   const avatarUri =
     profile?.avatar_url && profile.avatar_url.trim() !== ""
@@ -166,7 +177,6 @@ const handleDeleteAccount = () => {
 
   const colorsOptions = [
     { id: "teal", hex: "#00B4D8", name: "أزرق مخضر" },
-    { id: "purple", hex: "#8B5CF6", name: "أرجواني" },
     { id: "green", hex: "#10B981", name: "أخضر" },
     { id: "yellow", hex: "#F59E0B", name: "أصفر" },
     { id: "rose", hex: "#F43F5E", name: "وردي" },
@@ -290,14 +300,38 @@ const handleDeleteAccount = () => {
                           {isSelected && (
                             <Ionicons
                               name="checkmark"
-                              size={24}
+                              size={18}
                               color={theme.primary}
-                              style={{ position: "absolute", top: 0, right: 0 }}
                             />
                           )}
                         </TouchableOpacity>
                       );
                     })}
+                    <TouchableOpacity
+                      style={[
+                        styles.colorCircle,
+                        styles.customCircle,
+                        colorKey === "custom"
+                          ? {
+                              backgroundColor: mainColor,
+                              borderColor: mainColor,
+                            }
+                          : {
+                              backgroundColor: "transparent",
+                              borderColor: mainColor,
+                            },
+                      ]}
+                      onPress={() => {
+                        setSelectedColor(mainColor);
+                        setColorPickerVisible(true);
+                      }}
+                    >
+                      <Ionicons
+                        name={colorKey === "custom" ? "checkmark" : "add"}
+                        size={18}
+                        color={theme.primary}
+                      />
+                    </TouchableOpacity>
                   </View>
                 </View>
                 <View
@@ -543,6 +577,65 @@ const handleDeleteAccount = () => {
               </View>
             </View>
 
+            <SharedModal
+              visible={colorPickerVisible}
+              onRequestClose={() => setColorPickerVisible(false)}
+              onClose={() => setColorPickerVisible(false)}
+            >
+              <View
+                style={[
+                  styles.colorPickerModal,
+                  { backgroundColor: theme.card },
+                ]}
+              >
+                <Text style={[styles.titleModal, { color: theme.primary }]}>
+                  {" "}
+                  {t("chooseColor")}{" "}
+                </Text>
+                <ColorPicker
+                  value={selectedColor}
+                  onChangeJS={(colors: any) => {
+                    if (typeof colors?.hex === "string") {
+                      setSelectedColor(colors.hex);
+                    }
+                  }}
+                  style={styles.colorPicker}
+                >
+                  <Panel1 style={styles.panel} thumbSize={28} />
+                  <HueSlider style={styles.hueSlider} thumbSize={24} />
+                  <Preview
+                    style={styles.preview}
+                    textStyle={styles.previewText}
+                    colorFormat="hex"
+                  />
+                </ColorPicker>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.LogoutBtn, { backgroundColor: mainColor }]}
+                    onPress={() => {
+                      setCustomColor(selectedColor);
+                      setColorPickerVisible(false);
+                    }}
+                  >
+                    <Text style={{ color: "white", fontWeight: "bold" }}>
+                      {t("save")}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.CancelBtn,
+                      { backgroundColor: theme.borders },
+                    ]}
+                    onPress={() => setColorPickerVisible(false)}
+                  >
+                    <Text style={{ color: theme.primary, fontWeight: "bold" }}>
+                      {t("CAN")}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </SharedModal>
+
             <View style={styles.AboutAppSection}>
               <Text
                 style={[
@@ -704,6 +797,8 @@ const styles = StyleSheet.create({
     width: 25,
     height: 25,
     borderRadius: 50,
+    justifyContent: "center",
+    alignItems: "center",
   },
   languageRow: {
     flexDirection: "row",
@@ -811,6 +906,52 @@ const styles = StyleSheet.create({
     marginTop: 5,
     borderRadius: 5,
     marginHorizontal: 10,
+  },
+  colorPickerModal: {
+    width: "90%",
+    borderRadius: 20,
+    padding: 20,
+    alignItems: "center",
+  },
+  colorPicker: {
+    width: "100%",
+    minHeight: 250,
+    marginTop: 10,
+  },
+  panel: {
+    width: "100%",
+    height: 180,
+    borderRadius: 20,
+    marginBottom: 12,
+  },
+  hueSlider: {
+    width: "100%",
+    height: 30,
+    marginBottom: 12,
+  },
+  preview: {
+    width: "100%",
+    height: 50,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  previewText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "white",
+  },
+  customCircle: {
+    borderWidth: 1.5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkIcon: {
+    // kept for backward compatibility if used elsewhere
+  },
+  customCheckIcon: {
+    // kept for backward compatibility if used elsewhere
   },
   About: {
     justifyContent: "center",
