@@ -6,7 +6,6 @@ import { router, useSegments } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Alert,
   Animated,
   Dimensions,
   Pressable,
