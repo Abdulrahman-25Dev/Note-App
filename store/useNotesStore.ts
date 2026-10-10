@@ -3,6 +3,8 @@ import { createJSONStorage, persist } from "zustand/middleware";
 // قم بتعديل هذا المسار ليتطابق مع ملف إعداد سوبابيس الخاص بك
 import { supabase } from "../supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { enqueueAddNote, flushPendingOps } from "./pendingQueue";
+import { useAuthStore } from "./useAuthStore";
 type Note = {
   id: string; // معرف فريد UUID
   title: string;
@@ -47,80 +49,86 @@ export const useNotesStore = create<NotesState>()(
 
       // جلب المذكرات من سوبابيس عند توفر الإنترنت
       fetchNotes: async () => {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (!session?.user) return;
 
-    // 1️⃣ جلب الملاحظات الموجودة حالياً في ذاكرة الجهاز المحلية
-    const localNotes = get().notes || [];
+          // 1️⃣ جلب الملاحظات الموجودة حالياً في ذاكرة الجهاز المحلية
+          const localNotes = get().notes || [];
 
-    // 2️⃣ جلب بيانات السيرفر
-    const { data: serverNotes, error } = await supabase
-      .from("notes")
-      .select("*")
-      .eq("user_id", session.user.id)
-      .order("created_at", { ascending: false });
+          // 2️⃣ جلب بيانات السيرفر
+          const { data: serverNotes, error } = await supabase
+            .from("notes")
+            .select("*")
+            .eq("user_id", session.user.id)
+            .order("created_at", { ascending: false });
 
-    if (error) throw error;
+          if (error) throw error;
 
-    if (serverNotes) {
-      const serverIds = new Set(serverNotes.map((n: any) => n.id));
+          if (serverNotes) {
+            const serverIds = new Set(serverNotes.map((n: any) => n.id));
 
-      // 3️⃣ كشف الملاحظات التي تم إضافتها أوفلاين ولم تصل السيرفر بعد
-      const offlineCreatedNotes = localNotes.filter((n: any) => !serverIds.has(n.id));
+            // 3️⃣ كشف الملاحظات التي تم إضافتها أوفلاين ولم تصل السيرفر بعد
+            const offlineCreatedNotes = localNotes.filter(
+              (n: any) => !serverIds.has(n.id),
+            );
 
-      // 4️⃣ رفع الملاحظات الجديدة أوفلاين إلى السيرفر في الخلفية
-      if (offlineCreatedNotes.length > 0) {
-        const notesToUpload = offlineCreatedNotes.map((n: any) => ({
-          id: n.id,
-          title: n.title,
-          content: n.content,
-          user_id: session.user.id,
-          favorite: n.favorite,
-          deleted: n.deleted,
-        }));
+            // 4️⃣ رفع الملاحظات الجديدة أوفلاين إلى السيرفر في الخلفية
+            if (offlineCreatedNotes.length > 0) {
+              const notesToUpload = offlineCreatedNotes.map((n: any) => ({
+                id: n.id,
+                title: n.title,
+                content: n.content,
+                user_id: session.user.id,
+                favorite: n.favorite,
+                deleted: n.deleted,
+              }));
 
-        await supabase.from("notes").upsert(notesToUpload);
-      }
+              await supabase.from("notes").upsert(notesToUpload);
+            }
 
-      // 5️⃣ الدمج الذكي:
-      // الملاحظات المحلية لها الأولوية لتغطية التعديلات (Update/Favorite/Delete) التي حدثت أوفلاين
-      const localNotesMap = new Map(localNotes.map((n: any) => [n.id, n]));
+            // 5️⃣ الدمج الذكي:
+            // الملاحظات المحلية لها الأولوية لتغطية التعديلات (Update/Favorite/Delete) التي حدثت أوفلاين
+            const localNotesMap = new Map(
+              localNotes.map((n: any) => [n.id, n]),
+            );
 
-      // تحويل بيانات السيرفر لتنسيق المتجر
-      const formattedServerNotes = serverNotes.map((n: any) => ({
-        id: n.id,
-        title: n.title || "",
-        content: n.content || "",
-        createdAt: n.created_at,
-        favorite: n.favorite || false,
-        deleted: n.deleted || false,
-        user_id: n.user_id,
-      }));
+            // تحويل بيانات السيرفر لتنسيق المتجر
+            const formattedServerNotes = serverNotes.map((n: any) => ({
+              id: n.id,
+              title: n.title || "",
+              content: n.content || "",
+              createdAt: n.created_at,
+              favorite: n.favorite || false,
+              deleted: n.deleted || false,
+              user_id: n.user_id,
+            }));
 
-      // ندمج: إذا كان التعديل موجود محلياً نأخذه، وإلا نعتمد بيانات السيرفر
-      const mergedNotes = [
-        ...offlineCreatedNotes, // الملاحظات الأوفلاين الجديدة أولاً
-        ...formattedServerNotes.map((sNote: any) => localNotesMap.get(sNote.id) || sNote),
-      ];
+            // ندمج: إذا كان التعديل موجود محلياً نأخذه، وإلا نعتمد بيانات السيرفر
+            const mergedNotes = [
+              ...offlineCreatedNotes, // الملاحظات الأوفلاين الجديدة أولاً
+              ...formattedServerNotes.map(
+                (sNote: any) => localNotesMap.get(sNote.id) || sNote,
+              ),
+            ];
 
-      set({ notes: mergedNotes });
-    }
-  } catch (e) {
-    console.log("Offline mode: Fetching notes from local storage instead.");
-  }
-},
+            set({ notes: mergedNotes });
+          }
+        } catch (e) {
+          console.log(
+            "Offline mode: Fetching notes from local storage instead.",
+          );
+        }
+      },
 
       // إضافة مذكرة (محلياً فوراً، وسحابياً في حال توفر الشبكة)
       // إضافة مذكرة جديدة بدون أي رمشة أو تعليق في الواجهة
       addNote: async ({ title, content }) => {
         const localId = generateUUID(); // توليد معرّف فريد UUID محلياً واستخدامه كمعرّف رئيسي دائم
         const createdAt = new Date().toISOString();
-
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        const userId = session?.user?.id;
+        const userId = useAuthStore.getState().session?.user.id;
 
         const newNote: Note = {
           id: localId,
@@ -132,34 +140,15 @@ export const useNotesStore = create<NotesState>()(
           user_id: userId,
         };
 
-        // 1. الحفظ محلياً فوراً وبشكل دائم دون تغيير لاحق ⚡
         set((state) => ({
           notes: [newNote, ...state.notes],
         }));
 
-        // 2. الرفع السحابي في الخلفية بنفس الـ ID دون الحاجة لتحديث الواجهة مجدداً
-        if (userId) {
-          try {
-            const { error } = await supabase.from("notes").insert([
-              {
-                id: localId, // نرسل نفس الـ ID المولد محلياً ليتطابق السحاب مع المحلي تماماً
-                title,
-                content,
-                user_id: userId,
-                favorite: false,
-                deleted: false,
-              },
-            ]);
-
-            if (error) {
-              console.log("Database Sync Error:", error.message);
-            }
-          } catch (netError) {
-            console.log(
-              "Note saved locally! (Waiting for internet connection to sync)",
-            );
-          }
-        }
+        void enqueueAddNote(newNote)
+          .then(() => flushPendingOps())
+          .catch((error) => {
+            console.log("Could not persist pending note operation.", error);
+          });
       },
 
       // نقل المذكرة للمحذوفات
