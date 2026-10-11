@@ -2,7 +2,7 @@ import {
   StyleSheet,
   Text,
   View,
-  Image, 
+  Image,
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";

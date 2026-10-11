@@ -24,7 +24,10 @@ export const migrateLegacyProfileCache = async (
   if (!legacyData) return null;
 
   const parsedData = JSON.parse(legacyData) as CachedProfileData;
-  await AsyncStorage.setItem(PROFILE_CACHE_KEY(userId), JSON.stringify(parsedData));
+  await AsyncStorage.setItem(
+    PROFILE_CACHE_KEY(userId),
+    JSON.stringify(parsedData),
+  );
   await AsyncStorage.removeItem(LEGACY_PROFILE_CACHE_KEY);
   return parsedData;
 };
@@ -56,10 +59,7 @@ export const refreshProfileData = async (
     if (error) throw error;
     if (!data) return null;
 
-    await AsyncStorage.setItem(
-      PROFILE_CACHE_KEY(userId),
-      JSON.stringify(data),
-    );
+    await AsyncStorage.setItem(PROFILE_CACHE_KEY(userId), JSON.stringify(data));
     return data;
   } catch (error) {
     console.log("تعذر تحديث بيانات الملف الشخصي من السيرفر.", error);
@@ -101,7 +101,9 @@ export const saveAvatarCache = async (
     }
 
     if (/^https?:\/\//i.test(sourceUri)) {
-      await File.downloadFileAsync(sourceUri, destination, { idempotent: true });
+      await File.downloadFileAsync(sourceUri, destination, {
+        idempotent: true,
+      });
     } else {
       if (destination.exists) destination.delete();
       new File(sourceUri).copy(destination);

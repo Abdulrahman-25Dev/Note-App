@@ -94,16 +94,22 @@ export default function Settings() {
 
   const getContrastingColor = (hexColor: string) => {
     try {
-      const hex = hexColor.replace('#', '');
-      const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+      const hex = hexColor.replace("#", "");
+      const fullHex =
+        hex.length === 3
+          ? hex
+              .split("")
+              .map((c) => c + c)
+              .join("")
+          : hex;
       const bigint = parseInt(fullHex, 16);
       const r = (bigint >> 16) & 255;
       const g = (bigint >> 8) & 255;
       const b = bigint & 255;
       const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-      return brightness > 128 ? '#000000' : '#FFFFFF';
+      return brightness > 128 ? "#000000" : "#FFFFFF";
     } catch (e) {
-      return '#FFFFFF';
+      return "#FFFFFF";
     }
   };
 
@@ -140,7 +146,8 @@ export default function Settings() {
 
           if (currentSession?.user) {
             const status = await verifySession();
-            if (!isMounted || status === "offline" || status === "invalid") return;
+            if (!isMounted || status === "offline" || status === "invalid")
+              return;
 
             const freshData = await refreshProfileData(userId);
             if (!isMounted || !freshData) return;
@@ -152,7 +159,10 @@ export default function Settings() {
             });
 
             if (freshData.avatar_url) {
-              const savedAvatar = await saveAvatarCache(userId, freshData.avatar_url);
+              const savedAvatar = await saveAvatarCache(
+                userId,
+                freshData.avatar_url,
+              );
               if (isMounted && savedAvatar) {
                 setCachedAvatarUri(savedAvatar);
                 setFailedAvatarUri(null);
@@ -262,6 +272,8 @@ export default function Settings() {
   const avatarSource = displayedAvatarUri
     ? { uri: displayedAvatarUri }
     : require("../assets/images/user.png");
+  const shouldPromptLogin =
+    sessionStatus === "invalid" || (hasPreviousLogin && !session);
 
   const colorsOptions = [
     { id: "teal", hex: "#00B4D8", name: "أزرق مخضر" },
@@ -299,16 +311,20 @@ export default function Settings() {
                     !userId ||
                     !remoteAvatarUri ||
                     displayedAvatarUri !== remoteAvatarUri
-                  ) return;
-                  void saveAvatarCache(userId, remoteAvatarUri).then((savedUri) => {
-                    if (isScreenMounted.current && savedUri) {
-                      setCachedAvatarUri(savedUri);
-                      setFailedAvatarUri(null);
-                    }
-                  });
+                  )
+                    return;
+                  void saveAvatarCache(userId, remoteAvatarUri).then(
+                    (savedUri) => {
+                      if (isScreenMounted.current && savedUri) {
+                        setCachedAvatarUri(savedUri);
+                        setFailedAvatarUri(null);
+                      }
+                    },
+                  );
                 }}
                 onError={() => {
-                  if (displayedAvatarUri) setFailedAvatarUri(displayedAvatarUri);
+                  if (displayedAvatarUri)
+                    setFailedAvatarUri(displayedAvatarUri);
                 }}
               />
               <View style={[styles.profileInfo, { flexShrink: 1 }]}>
@@ -327,37 +343,34 @@ export default function Settings() {
                   {/* ⚡ القراءة من profile.email أولاً تضمن ظهور الإيميل أوفلاين ولحظياً بدون flicker */}
                   {profile?.email || session?.user?.email || "غير مسجل"}
                 </Text>
-              </View>
-            </View>
-
-            {(sessionStatus === "offline" ||
-              sessionStatus === "invalid" ||
-              (hasPreviousLogin && !session)) && (
-              <View
-                style={[
-                  styles.sessionNotice,
-                  { backgroundColor: theme.card, borderColor: theme.borders },
-                ]}
-              >
-                <Text style={{ color: theme.primary, flex: 1 }}>
-                  {sessionStatus === "offline"
-                    ? "أنت غير متصل. نعرض بياناتك المحفوظة محلياً."
-                    : sessionStatus === "invalid"
-                      ? "انتهت صلاحية الجلسة. بياناتك المحلية محفوظة؛ سجّل الدخول للمتابعة."
-                      : "تعذر استعادة جلسة الدخول. بياناتك المحلية محفوظة؛ سجّل الدخول عند توفر الاتصال."}
-                </Text>
-                {(sessionStatus === "invalid" || !session) && (
+                {shouldPromptLogin && (
                   <TouchableOpacity
                     onPress={() => router.push("/Auth/Login")}
                     accessibilityRole="button"
+                    accessibilityLabel="تسجيل الدخول"
+                    hitSlop={6}
+                    style={[
+                      styles.profileSessionStatus,
+                      { flexDirection: isRTL ? "row-reverse" : "row" },
+                    ]}
                   >
-                    <Text style={{ color: mainColor, fontWeight: "bold" }}>
-                      تسجيل الدخول
+                    <Ionicons
+                      name="log-in-outline"
+                      size={13}
+                      color={mainColor}
+                    />
+                    <Text
+                      style={[
+                        styles.profileSessionStatusAction,
+                        { color: mainColor },
+                      ]}
+                    >
+                      دخول
                     </Text>
                   </TouchableOpacity>
                 )}
               </View>
-            )}
+            </View>
 
             <View style={styles.appearanceSection}>
               <Text
@@ -661,9 +674,11 @@ export default function Settings() {
                                 console.log("Navigation to Login failed:", e);
                               }
 
-                              void supabase.auth.signOut({ scope: "local" }).catch((e) => {
-                                console.log("supabase.signOut() failed:", e);
-                              });
+                              void supabase.auth
+                                .signOut({ scope: "local" })
+                                .catch((e) => {
+                                  console.log("supabase.signOut() failed:", e);
+                                });
                             },
                           },
                         ],
@@ -724,7 +739,12 @@ export default function Settings() {
                       setColorPickerVisible(false);
                     }}
                   >
-                    <Text style={{ color: getContrastingColor(mainColor), fontWeight: "bold" }}>
+                    <Text
+                      style={{
+                        color: getContrastingColor(mainColor),
+                        fontWeight: "bold",
+                      }}
+                    >
                       {t("save")}
                     </Text>
                   </TouchableOpacity>
@@ -796,14 +816,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  sessionNotice: {
+  profileSessionStatus: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 12,
-    marginTop: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 8,
+    gap: 5,
+    marginTop: 3,
+    maxWidth: "100%",
+  },
+  profileSessionStatusText: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 10,
+    lineHeight: 14,
+  },
+  profileSessionStatusAction: {
+    fontSize: 10,
+    fontWeight: "700",
   },
   header: {
     flexDirection: "row",

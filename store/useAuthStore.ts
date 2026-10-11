@@ -1,8 +1,8 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Session } from '@supabase/supabase-js';
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import { supabase } from '../supabase';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Session } from "@supabase/supabase-js";
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { supabase } from "../supabase";
 
 interface UserProfile {
   username: string;
@@ -45,32 +45,44 @@ export const useAuthStore = create<AuthState>()(
       verifySession: async (): Promise<SessionStatus> => {
         const { session } = get();
         if (!session) return get().sessionStatus;
+        const expectedUserId = session.user.id;
 
         try {
-          const { data, error } = await supabase.auth.getUser(
-            session.access_token,
-          );
+          const { data, error } = await supabase.auth.getUser();
+
+          if (get().session?.user.id !== expectedUserId) {
+            return get().sessionStatus;
+          }
 
           if (!error && data.user) {
-            if (get().session?.user.id !== session.user.id) return get().sessionStatus;
+            if (data.user.id !== expectedUserId) {
+              console.warn(
+                "Auth user does not match the locally stored session user.",
+              );
+              set({ sessionStatus: "invalid" });
+              return "invalid";
+            }
+
             set({ sessionStatus: "valid" });
             return "valid";
           }
 
           if (error?.status === 401) {
-            if (get().session?.user.id !== session.user.id) return get().sessionStatus;
             set({ sessionStatus: "invalid" });
             return "invalid";
           }
 
           if (error && isNetworkFailure(error)) {
-            if (get().session?.user.id !== session.user.id) return get().sessionStatus;
             set({ sessionStatus: "offline" });
             return "offline";
           }
 
           return get().sessionStatus;
         } catch (error) {
+          if (get().session?.user.id !== expectedUserId) {
+            return get().sessionStatus;
+          }
+
           if (isNetworkFailure(error)) {
             set({ sessionStatus: "offline" });
             return "offline";
@@ -83,13 +95,13 @@ export const useAuthStore = create<AuthState>()(
         set({ session: null, profile: null, sessionStatus: "unknown" }),
     }),
     {
-      name: 'auth-user-storage',
+      name: "auth-user-storage",
       storage: createJSONStorage(() => AsyncStorage),
       onRehydrateStorage: () => (state) => {
         state?.setSessionStatus("unknown");
       },
-    }
-  )
+    },
+  ),
 );
 
 supabase.auth.onAuthStateChange((event, session) => {

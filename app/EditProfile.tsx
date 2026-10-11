@@ -82,7 +82,8 @@ const EditProfile = () => {
           if (!currentSession?.user) return;
 
           const status = await verifySession();
-          if (!isFocused || status === "offline" || status === "invalid") return;
+          if (!isFocused || status === "offline" || status === "invalid")
+            return;
 
           const freshProfile = await refreshProfileData(userId);
           if (!isFocused || !freshProfile) return;
@@ -156,7 +157,8 @@ const EditProfile = () => {
 
       const currentSession = useAuthStore.getState().session;
       const userId =
-        currentSession?.user.id ?? (await AsyncStorage.getItem(LAST_USER_ID_KEY));
+        currentSession?.user.id ??
+        (await AsyncStorage.getItem(LAST_USER_ID_KEY));
       const currentEmail =
         useAuthStore.getState().profile?.email ||
         currentSession?.user?.email ||
@@ -258,7 +260,8 @@ const EditProfile = () => {
                 !userId ||
                 !remoteAvatarUri ||
                 displayedAvatarUri !== remoteAvatarUri
-              ) return;
+              )
+                return;
               void saveAvatarCache(userId, remoteAvatarUri).then((savedUri) => {
                 if (isFocusedRef.current && savedUri) {
                   setCachedAvatarUri(savedUri);
@@ -276,7 +279,9 @@ const EditProfile = () => {
         </TouchableOpacity>
 
         {/* جزء الاسم */}
-        <Text style={[styles.label, isRTL && { textAlign: "right" }]}>{t("username")}</Text>
+        <Text style={[styles.label, isRTL && { textAlign: "right" }]}>
+          {t("username")}
+        </Text>
         <TextInput
           style={styles.input}
           value={username}
