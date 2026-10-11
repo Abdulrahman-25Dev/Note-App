@@ -36,21 +36,42 @@ export default function Index() {
 
   const fetchNotes = useNotesStore((state) => state.fetchNotes);
 
-// تعديل الـ useEffect لاستدعاء جلب البيانات من السحاب فور تحميل الصفحة
-useEffect(() => {
-  const arabic = i18n.language === "ar";
-  dayjs.locale(arabic ? "ar" : "en");
-  dayjs.extend(relativeTime);
-  
-  // استدعاء جلب المذكرات من سوبابيس فوراً
-  fetchNotes();
-}, []);
+  // تعديل الـ useEffect لاستدعاء جلب البيانات من السحاب فور تحميل الصفحة
+  useEffect(() => {
+    const arabic = i18n.language === "ar";
+    dayjs.locale(arabic ? "ar" : "en");
+    dayjs.extend(relativeTime);
+
+    // استدعاء جلب المذكرات من سوبابيس فوراً
+    fetchNotes();
+  }, []);
 
   // جلب الثيم من الـ store
   const { isDarkMode } = useThemeStore();
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
   const mainColor = useThemeStore((state) => state.mainColor);
+
+  const getContrastingColor = (hexColor: string) => {
+    try {
+      const hex = hexColor.replace("#", "");
+      const fullHex =
+        hex.length === 3
+          ? hex
+              .split("")
+              .map((c) => c + c)
+              .join("")
+          : hex;
+      const bigint = parseInt(fullHex, 16);
+      const red = (bigint >> 16) & 255;
+      const green = (bigint >> 8) & 255;
+      const blue = bigint & 255;
+      const brightness = (red * 299 + green * 587 + blue * 114) / 1000;
+      return brightness > 128 ? "#000000" : "#FFFFFF";
+    } catch {
+      return "#FFFFFF";
+    }
+  };
 
   const { width } = Dimensions.get("window");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -132,10 +153,19 @@ useEffect(() => {
           <View
             style={[
               styles.searchbar,
-              { backgroundColor: theme.card, borderColor: mainColor, borderWidth: 0.5 },
+              {
+                backgroundColor: theme.card,
+                borderColor: mainColor,
+                borderWidth: 0.5,
+              },
             ]}
           >
-            <Ionicons name="search" size={20} color={mainColor} style={{ marginLeft: 8 }} />
+            <Ionicons
+              name="search"
+              size={20}
+              color={mainColor}
+              style={{ marginLeft: 8 }}
+            />
             <TextInput
               value={search}
               onChangeText={(text) => setSearch(text)}
@@ -153,19 +183,49 @@ useEffect(() => {
               <View style={styles.noteContainer}>
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  style={[styles.note, { backgroundColor: theme.card, elevation: 5, borderColor: mainColor }]}
+                  style={[
+                    styles.note,
+                    {
+                      backgroundColor: theme.card,
+                      elevation: 5,
+                      borderColor: mainColor,
+                    },
+                  ]}
                   onPress={() => router.push(`/Notes/${item.id}`)}
-                  onLongPress={() => handleCopy(`${item.title}\n${item.content}`)}
+                  onLongPress={() =>
+                    handleCopy(`${item.title}\n${item.content}`)
+                  }
                 >
                   <TouchableOpacity
                     onPress={() => handleFavorite(item.id)}
-                    style={{ position: "absolute", bottom: 10, left: 10, zIndex: 1 }}
+                    style={{
+                      position: "absolute",
+                      bottom: 10,
+                      left: 10,
+                      zIndex: 1,
+                    }}
                   >
-                    <Ionicons name={item.favorite ? "heart" : "heart-outline"} size={24} color={mainColor} />
+                    <Ionicons
+                      name={item.favorite ? "heart" : "heart-outline"}
+                      size={24}
+                      color={mainColor}
+                    />
                   </TouchableOpacity>
-                  <Text style={[styles.noteTitle, { color: theme.primary }]} numberOfLines={1}>{item.title}</Text>
-                  <Text style={[styles.noteContent, { color: theme.secondary }]} numberOfLines={1}>{item.content}</Text>
-                  <Text style={[styles.noteDate, { color: theme.secondary }]}>{dayjs(item.createdAt).fromNow()}</Text>
+                  <Text
+                    style={[styles.noteTitle, { color: theme.primary }]}
+                    numberOfLines={1}
+                  >
+                    {item.title}
+                  </Text>
+                  <Text
+                    style={[styles.noteContent, { color: theme.secondary }]}
+                    numberOfLines={1}
+                  >
+                    {item.content}
+                  </Text>
+                  <Text style={[styles.noteDate, { color: theme.secondary }]}>
+                    {dayjs(item.createdAt).fromNow()}
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -177,20 +237,47 @@ useEffect(() => {
               </View>
             )}
           />
-          <TouchableOpacity style={[styles.Add, { backgroundColor: mainColor }]} onPress={Add}>
-            <Ionicons name="add" size={32} color="#fff" />
+          <TouchableOpacity
+            style={[styles.Add, { backgroundColor: mainColor }]}
+            onPress={Add}
+          >
+            <Ionicons
+              name="add"
+              size={32}
+              color={getContrastingColor(mainColor)}
+            />
           </TouchableOpacity>
         </View>
-        <SharedModal visible={showDeleteModal} onClose={() => setShowDeleteModal(false)} onRequestClose={() => setShowDeleteModal(false)}>
-          <View style={[styles.modalContainer, { backgroundColor: theme.card }]}>
-            <Text style={[styles.titleModal, { color: theme.primary }]}>{t("DELALLNotes")}</Text>
-            <Text style={[styles.textModal, { color: theme.primary }]}>{t("sureDELAllNotes")}</Text>
+        <SharedModal
+          visible={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onRequestClose={() => setShowDeleteModal(false)}
+        >
+          <View
+            style={[styles.modalContainer, { backgroundColor: theme.card }]}
+          >
+            <Text style={[styles.titleModal, { color: theme.primary }]}>
+              {t("DELALLNotes")}
+            </Text>
+            <Text style={[styles.textModal, { color: theme.primary }]}>
+              {t("sureDELAllNotes")}
+            </Text>
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalDeleteBtn, { backgroundColor: "#DC2626" }]} onPress={handleDeleteAllNotes}>
-                <Text style={{ color: "#ffffff", fontWeight: "bold" }}>{t("DEL")}</Text>
+              <TouchableOpacity
+                style={[styles.modalDeleteBtn, { backgroundColor: "#DC2626" }]}
+                onPress={handleDeleteAllNotes}
+              >
+                <Text style={{ color: "#ffffff", fontWeight: "bold" }}>
+                  {t("DEL")}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalCancelBtn, { backgroundColor: "#3B82F6" }]} onPress={() => setShowDeleteModal(false)}>
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>{t("CAN")}</Text>
+              <TouchableOpacity
+                style={[styles.modalCancelBtn, { backgroundColor: "#3B82F6" }]}
+                onPress={() => setShowDeleteModal(false)}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  {t("CAN")}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
