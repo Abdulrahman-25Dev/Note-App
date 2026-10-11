@@ -9,8 +9,14 @@ import {
 import { useState } from "react";
 import { Button, TextInput } from "react-native-paper";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 // 1. استيراد عميل سوبابيس من الملف الذي أنشأناه سابقاً
 import { supabase } from "../../supabase"; // تأكد من مطابقة المسار الفعلي لملف supabase.ts في مشروعك
+import {
+  LAST_USER_ID_KEY,
+  migrateLegacyProfileCache,
+} from "../../profileService";
+import { useAuthStore } from "../../store/useAuthStore";
 
 const Login = () => {
   const [email, setEmail] = useState<string>("");
@@ -46,7 +52,23 @@ const Login = () => {
         // إذا حدث خطأ من السيرفر (مثل كلمة مرور خاطئة أو الحساب غير موجود)
         setError(authError.message);
       } else {
-        // عند نجاح العملية، يتم توجيه المستخدم تلقائياً للصفحة الرئيسية
+        if (data.session?.user) {
+          try {
+            await migrateLegacyProfileCache(data.session.user.id);
+          } catch (migrationError) {
+            console.log("تعذر ترحيل كاش الملف الشخصي القديم.", migrationError);
+          }
+
+          try {
+            await AsyncStorage.setItem(LAST_USER_ID_KEY, data.session.user.id);
+          } catch (storageError) {
+            console.log("تعذر حفظ علامة تسجيل الدخول.", storageError);
+          }
+
+          useAuthStore.getState().setSession(data.session);
+          useAuthStore.getState().setSessionStatus("valid");
+        }
+
         router.replace("/");
       }
     } catch (e) {

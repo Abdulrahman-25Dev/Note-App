@@ -2,15 +2,15 @@ import { useThemeStore } from "@/store/useThemeStore";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker"; // استيراد مكتبة اختيار الصور
 import { router } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ActivityIndicator,
-  Image,
   Platform,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -18,13 +18,17 @@ import {
   View,
 } from "react-native";
 import {
-  fetchProfileData,
+  getCachedAvatar,
+  getCachedProfileData,
+  LAST_USER_ID_KEY,
+  refreshProfileData,
+  saveAvatarCache,
+  saveCachedProfileData,
   updateProfileData,
   uploadAvatar,
 } from "../profileService";
 import { useAlertStore } from "../store/useAlertStore";
 import { useAuthStore } from "../store/useAuthStore";
-import { supabase } from "../supabase";
 import i18n from "@/i18n/i18n";
 
 const EditProfile = () => {
@@ -36,48 +40,81 @@ const EditProfile = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const { mainColor } = useThemeStore();
-
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
-    try {
-      setLoading(true);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        const profile = await fetchProfileData(user.id);
-        if (profile) {
-          setUsername(profile.username || "");
-          setAvatarUrl(profile.avatar_url); // جلب الرابط الحالي من القاعدة
-        }
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const authProfile = useAuthStore((state) => state.profile);
+  const session = useAuthStore((state) => state.session);
+  const verifySession = useAuthStore((state) => state.verifySession);
+  const [cachedAvatarUri, setCachedAvatarUri] = useState<string | null>(null);
+  const [failedAvatarUri, setFailedAvatarUri] = useState<string | null>(null);
+  const isFocusedRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
-      const loadUpdatedProfile = async () => {
+      let isFocused = true;
+      isFocusedRef.current = true;
+
+      const loadCachedProfile = async () => {
         try {
-          const cachedData = await AsyncStorage.getItem("@user_profile_data");
-          if (cachedData) {
-            const parsed = JSON.parse(cachedData);
-            if (parsed.username) setUsername(parsed.username);
-            if (parsed.avatar_url) setAvatarUrl(parsed.avatar_url);
+          const currentSession = session;
+          const userId =
+            currentSession?.user.id ??
+            (await AsyncStorage.getItem(LAST_USER_ID_KEY));
+          if (!userId) return;
+
+          const [profile, avatar] = await Promise.all([
+            getCachedProfileData(userId),
+            getCachedAvatar(userId),
+          ]);
+
+          if (!isFocused) return;
+          if (profile) {
+            setUsername(profile.username || "");
+            setAvatarUrl(profile.avatar_url ?? null);
+          } else {
+            const storedProfile = useAuthStore.getState().profile;
+            if (storedProfile) {
+              setUsername(storedProfile.username);
+              setAvatarUrl(storedProfile.avatar_url || null);
+            }
           }
-        } catch (e) {
-          console.error("خطأ قراءة الكاش:", e);
+          if (avatar) setCachedAvatarUri(avatar);
+          setLoading(false);
+
+          if (!currentSession?.user) return;
+
+          const status = await verifySession();
+          if (!isFocused || status === "offline" || status === "invalid") return;
+
+          const freshProfile = await refreshProfileData(userId);
+          if (!isFocused || !freshProfile) return;
+
+          setUsername(freshProfile.username || "");
+          setAvatarUrl(freshProfile.avatar_url ?? null);
+          useAuthStore.getState().setProfile({
+            username: freshProfile.username || "مستخدم",
+            avatar_url: freshProfile.avatar_url || "",
+            email: currentSession.user.email || "",
+          });
+
+          if (freshProfile.avatar_url) {
+            const savedAvatar = await saveAvatarCache(
+              userId,
+              freshProfile.avatar_url,
+            );
+            if (isFocused && savedAvatar) setCachedAvatarUri(savedAvatar);
+          }
+        } catch (error) {
+          console.log("تعذر تحميل بيانات الملف الشخصي.", error);
+        } finally {
+          if (isFocused) setLoading(false);
         }
       };
 
-      loadUpdatedProfile();
-    }, []),
+      void loadCachedProfile();
+      return () => {
+        isFocused = false;
+        isFocusedRef.current = false;
+      };
+    }, [session, verifySession]),
   );
   // دالة فتح معرض الصور
   const handlePickImage = async () => {
@@ -100,7 +137,16 @@ const EditProfile = () => {
     });
 
     if (!result.canceled) {
-      setLocalImageUri(result.assets[0].uri); // تخزين المسار المحلي لعرضه فوراً
+      if (!isFocusedRef.current) return;
+      const selectedUri = result.assets[0].uri;
+      setLocalImageUri(selectedUri);
+      setFailedAvatarUri(null);
+      const userId = session?.user.id;
+      if (userId) {
+        void saveAvatarCache(userId, selectedUri).then((savedUri) => {
+          if (isFocusedRef.current && savedUri) setCachedAvatarUri(savedUri);
+        });
+      }
     }
   };
 
@@ -108,9 +154,9 @@ const EditProfile = () => {
     try {
       setSaving(true);
 
-      // 1. تحديد بيانات المستخدم مباشرة من الـ Store
       const currentSession = useAuthStore.getState().session;
-      const userId = currentSession?.user?.id;
+      const userId =
+        currentSession?.user.id ?? (await AsyncStorage.getItem(LAST_USER_ID_KEY));
       const currentEmail =
         useAuthStore.getState().profile?.email ||
         currentSession?.user?.email ||
@@ -118,10 +164,12 @@ const EditProfile = () => {
 
       if (!userId) return;
 
-      // ⚡ 2. تجهيز الصورة والتأكد من أنها ليست null
-      const displayAvatar = localImageUri || avatarUrl || "";
+      const localAvatar = localImageUri
+        ? await saveAvatarCache(userId, localImageUri)
+        : null;
+      const displayAvatar = localAvatar || cachedAvatarUri || avatarUrl || "";
+      await saveCachedProfileData(userId, username, displayAvatar);
 
-      // 🎯 3. التحديث المباشر للـ Store + الضمان المحلي للـ Cache (الكود الذي سألت عنه)
       const currentProfile = useAuthStore.getState().profile;
 
       useAuthStore.setState({
@@ -132,27 +180,23 @@ const EditProfile = () => {
         },
       });
 
-      // 📣 4. إظهار تنبيه النجاح للمستخدم
       showAlert({ title: t("success"), message: t("profileUpdated") });
 
-      // 🔙 5. العودة لشاشة الإعدادات
       router.back();
 
-      // 🔄 6. المزامنة في الخلفية (عند توفر الإنترنت)
       (async () => {
         try {
           let finalAvatarUrl = avatarUrl || "";
 
-          // رفع الصورة لو اختار المستخدم صورة جديدة
-          if (localImageUri) {
+          if (localImageUri && currentSession?.user) {
             const uploadedUrl = await uploadAvatar(userId, localImageUri);
             finalAvatarUrl = `${uploadedUrl}?t=${Date.now()}`;
           }
 
-          // تحديث قاعدة البيانات في Supabase
-          await updateProfileData(userId, username, finalAvatarUrl);
+          if (currentSession?.user) {
+            await updateProfileData(userId, username, finalAvatarUrl);
+          }
 
-          // تحديث الـ Store بالرابط النهائي بعد الرفع
           const updatedProfile = useAuthStore.getState().profile;
           if (updatedProfile) {
             useAuthStore.setState({
@@ -180,12 +224,14 @@ const EditProfile = () => {
   if (loading)
     return <ActivityIndicator size="large" color="#fff" style={{ flex: 1 }} />;
 
-  // تحديد مصدر الصورة للعرض (الأولوية للمحلية، ثم للرابط القادم من Supabase، ثم Placeholder)
-  const imageSource = localImageUri
-    ? { uri: localImageUri }
-    : avatarUrl
-      ? { uri: avatarUrl }
-      : require("../assets/images/user.png");
+  const remoteAvatarUri = avatarUrl || authProfile?.avatar_url || null;
+  const displayedAvatarUri =
+    [localImageUri, cachedAvatarUri, remoteAvatarUri].find(
+      (uri) => uri && uri !== failedAvatarUri,
+    ) || null;
+  const imageSource = displayedAvatarUri
+    ? { uri: displayedAvatarUri }
+    : require("../assets/images/user.png");
 
   return (
     <SafeAreaView style={styles.container}>
@@ -205,6 +251,24 @@ const EditProfile = () => {
           <Image
             source={imageSource}
             style={[styles.avatar, { borderColor: mainColor }]}
+            cachePolicy="disk"
+            onLoad={() => {
+              const userId = session?.user.id;
+              if (
+                !userId ||
+                !remoteAvatarUri ||
+                displayedAvatarUri !== remoteAvatarUri
+              ) return;
+              void saveAvatarCache(userId, remoteAvatarUri).then((savedUri) => {
+                if (isFocusedRef.current && savedUri) {
+                  setCachedAvatarUri(savedUri);
+                  setFailedAvatarUri(null);
+                }
+              });
+            }}
+            onError={() => {
+              if (displayedAvatarUri) setFailedAvatarUri(displayedAvatarUri);
+            }}
           />
           <Text style={[styles.changePhotoText, { color: mainColor }]}>
             {t("changePhoto")}

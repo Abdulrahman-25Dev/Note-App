@@ -6,7 +6,6 @@ import { router, useSegments } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Alert,
   Animated,
   Dimensions,
   Pressable,
@@ -21,7 +20,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import DrawerMenu from "../components/DrawerMenu";
 import SharedModal from "../components/sharedModal";
 import { Colors } from "../Constants/Colors";
-import { fetchProfileData } from "../profileService"; // تأكد من المسار الصحيح
+import {
+  getCachedAvatar,
+  getCachedProfileData,
+  LAST_USER_ID_KEY,
+  refreshProfileData,
+  saveAvatarCache,
+} from "../profileService";
 import { useAlertStore } from "../store/useAlertStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { useNotesStore } from "../store/useNotesStore";
@@ -37,6 +42,8 @@ import ColorPicker, {
 export default function Settings() {
   const session = useAuthStore((state) => state.session);
   const profile = useAuthStore((state) => state.profile);
+  const sessionStatus = useAuthStore((state) => state.sessionStatus);
+  const verifySession = useAuthStore((state) => state.verifySession);
   const { t, i18n } = useTranslation();
   const { isDarkMode, toggleDarkMode, setMainColor, setCustomColor } =
     useThemeStore();
@@ -52,7 +59,17 @@ export default function Settings() {
   const currentTab = segments[1] || "settings";
   const [colorPickerVisible, setColorPickerVisible] = useState(false);
   const [selectedColor, setSelectedColor] = useState(mainColor);
+  const [cachedAvatarUri, setCachedAvatarUri] = useState<string | null>(null);
+  const [failedAvatarUri, setFailedAvatarUri] = useState<string | null>(null);
+  const [hasPreviousLogin, setHasPreviousLogin] = useState(false);
+  const isScreenMounted = useRef(true);
 
+  useEffect(() => {
+    isScreenMounted.current = true;
+    return () => {
+      isScreenMounted.current = false;
+    };
+  }, []);
   // Modals
 
   useEffect(() => {
@@ -95,36 +112,64 @@ export default function Settings() {
     useCallback(() => {
       let isMounted = true;
 
-      const syncProfileIfOnline = async () => {
+      const loadProfileCacheThenRefresh = async () => {
         try {
-          // نستخدم الجلسة المحفوظة في Zustand بدلاً من استدعاء الشبكة من Supabase
-          const currentSession = useAuthStore.getState().session;
+          const currentSession = session;
+          const previousUserId = await AsyncStorage.getItem(LAST_USER_ID_KEY);
+          if (!isMounted) return;
+          setHasPreviousLogin(!currentSession?.user && !!previousUserId);
+          const userId = currentSession?.user.id ?? previousUserId;
+          if (!userId) return;
 
-          if (currentSession?.user && isMounted) {
-            // جلب البيانات من السيرفر فقط كمزامنة في الخلفية
-            const data = await fetchProfileData(currentSession.user.id);
+          const [cachedData, cachedAvatar] = await Promise.all([
+            getCachedProfileData(userId),
+            getCachedAvatar(userId),
+          ]);
 
-            if (isMounted && data) {
-              useAuthStore.getState().setProfile({
-                username: data.username || "مستخدم",
-                avatar_url: data.avatar_url || "",
-                email: currentSession.user.email || "",
-              });
+          if (cachedAvatar) setCachedAvatarUri(cachedAvatar);
+          if (cachedData) {
+            useAuthStore.getState().setProfile({
+              username: cachedData.username || "مستخدم",
+              avatar_url: cachedData.avatar_url || "",
+              email:
+                currentSession?.user.email ||
+                useAuthStore.getState().profile?.email ||
+                "",
+            });
+          }
+
+          if (currentSession?.user) {
+            const status = await verifySession();
+            if (!isMounted || status === "offline" || status === "invalid") return;
+
+            const freshData = await refreshProfileData(userId);
+            if (!isMounted || !freshData) return;
+
+            useAuthStore.getState().setProfile({
+              username: freshData.username || "مستخدم",
+              avatar_url: freshData.avatar_url || "",
+              email: currentSession.user.email || "",
+            });
+
+            if (freshData.avatar_url) {
+              const savedAvatar = await saveAvatarCache(userId, freshData.avatar_url);
+              if (isMounted && savedAvatar) {
+                setCachedAvatarUri(savedAvatar);
+                setFailedAvatarUri(null);
+              }
             }
           }
         } catch (error) {
-          // ⚡ السر هنا: التقاط خطأ الشبكة بصمت تماماً دون إظهاره للمستخدم
-          // التطبيق سيعتمد تلقائياً على البيانات المحفوظة سابقاً في Zustand
-          console.log("Offline mode active: using cached store profile");
+          console.log("تعذر تحديث بيانات الملف الشخصي بالخلفية.", error);
         }
       };
 
-      syncProfileIfOnline();
+      void loadProfileCacheThenRefresh();
 
       return () => {
         isMounted = false;
       };
-    }, []),
+    }, [session, verifySession]),
   );
 
   const showAlert = useAlertStore((s) => s.showAlert);
@@ -184,7 +229,9 @@ export default function Settings() {
                 await supabase.rpc("delete_user");
               }
 
-              await AsyncStorage.clear();
+              await AsyncStorage.removeItem(LAST_USER_ID_KEY);
+              useAuthStore.getState().clearAuth();
+              useNotesStore.setState({ notes: [] });
               await supabase.auth.signOut();
 
               showAlert({
@@ -204,10 +251,17 @@ export default function Settings() {
     });
   };
 
-  const avatarUri =
+  const remoteAvatarUri =
     profile?.avatar_url && profile.avatar_url.trim() !== ""
-      ? profile.avatar_url.split("?")[0]
-      : "https://cdn-icons-png.flaticon.com/128/9131/9131646.png";
+      ? profile.avatar_url
+      : null;
+  const displayedAvatarUri =
+    [cachedAvatarUri, remoteAvatarUri].find(
+      (uri) => uri && uri !== failedAvatarUri,
+    ) || null;
+  const avatarSource = displayedAvatarUri
+    ? { uri: displayedAvatarUri }
+    : require("../assets/images/user.png");
 
   const colorsOptions = [
     { id: "teal", hex: "#00B4D8", name: "أزرق مخضر" },
@@ -236,11 +290,26 @@ export default function Settings() {
               ]}
             >
               <Image
-                source={{
-                  uri: avatarUri,
-                }}
+                source={avatarSource}
                 style={[styles.Image, { borderColor: mainColor }]}
-                cachePolicy="memory-disk"
+                cachePolicy="disk"
+                onLoad={() => {
+                  const userId = session?.user.id;
+                  if (
+                    !userId ||
+                    !remoteAvatarUri ||
+                    displayedAvatarUri !== remoteAvatarUri
+                  ) return;
+                  void saveAvatarCache(userId, remoteAvatarUri).then((savedUri) => {
+                    if (isScreenMounted.current && savedUri) {
+                      setCachedAvatarUri(savedUri);
+                      setFailedAvatarUri(null);
+                    }
+                  });
+                }}
+                onError={() => {
+                  if (displayedAvatarUri) setFailedAvatarUri(displayedAvatarUri);
+                }}
               />
               <View style={[styles.profileInfo, { flexShrink: 1 }]}>
                 <Text
@@ -260,6 +329,35 @@ export default function Settings() {
                 </Text>
               </View>
             </View>
+
+            {(sessionStatus === "offline" ||
+              sessionStatus === "invalid" ||
+              (hasPreviousLogin && !session)) && (
+              <View
+                style={[
+                  styles.sessionNotice,
+                  { backgroundColor: theme.card, borderColor: theme.borders },
+                ]}
+              >
+                <Text style={{ color: theme.primary, flex: 1 }}>
+                  {sessionStatus === "offline"
+                    ? "أنت غير متصل. نعرض بياناتك المحفوظة محلياً."
+                    : sessionStatus === "invalid"
+                      ? "انتهت صلاحية الجلسة. بياناتك المحلية محفوظة؛ سجّل الدخول للمتابعة."
+                      : "تعذر استعادة جلسة الدخول. بياناتك المحلية محفوظة؛ سجّل الدخول عند توفر الاتصال."}
+                </Text>
+                {(sessionStatus === "invalid" || !session) && (
+                  <TouchableOpacity
+                    onPress={() => router.push("/Auth/Login")}
+                    accessibilityRole="button"
+                  >
+                    <Text style={{ color: mainColor, fontWeight: "bold" }}>
+                      تسجيل الدخول
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
 
             <View style={styles.appearanceSection}>
               <Text
@@ -533,27 +631,7 @@ export default function Settings() {
                     {t("Logout")}
                   </Text>
                   <TouchableOpacity
-                    onPress={async () => {
-                      try {
-                        const netState = await NetInfo.fetch();
-                        const isConnected = !!netState?.isConnected;
-
-                        if (!isConnected) {
-                          showAlert({
-                            title: t("offline"),
-                            message: t("needInternet"),
-                          });
-                          return;
-                        }
-                      } catch (e) {
-                        console.log("NetInfo.fetch failed:", e);
-                        showAlert({
-                          title: t("offline"),
-                          message: t("needInternet"),
-                        });
-                        return;
-                      }
-
+                    onPress={() => {
                       showAlert({
                         title: t("Logout"),
                         message: t("sureLogout"),
@@ -571,22 +649,10 @@ export default function Settings() {
                               }
 
                               try {
+                                await AsyncStorage.removeItem(LAST_USER_ID_KEY);
                                 useAuthStore.getState().clearAuth();
                               } catch (e) {
                                 console.log("Failed to clear auth store:", e);
-                              }
-
-                              // Attempt remote sign-out but don't block if it fails
-                              try {
-                                await supabase.auth.signOut();
-                              } catch (e) {
-                                console.log("supabase.signOut() failed:", e);
-                              }
-
-                              try {
-                                await AsyncStorage.clear();
-                              } catch (e) {
-                                console.log("AsyncStorage.clear() failed:", e);
                               }
 
                               try {
@@ -594,6 +660,10 @@ export default function Settings() {
                               } catch (e) {
                                 console.log("Navigation to Login failed:", e);
                               }
+
+                              void supabase.auth.signOut({ scope: "local" }).catch((e) => {
+                                console.log("supabase.signOut() failed:", e);
+                              });
                             },
                           },
                         ],
@@ -725,6 +795,15 @@ export default function Settings() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  sessionNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 12,
+    marginTop: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 8,
   },
   header: {
     flexDirection: "row",
