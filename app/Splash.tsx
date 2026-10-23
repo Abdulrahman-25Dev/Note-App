@@ -1,14 +1,29 @@
 import React from "react";
 import { View, StyleSheet, Text } from "react-native";
 import LottieView from "lottie-react-native";
+import { useTranslation } from "react-i18next";
+import { Colors } from "../Constants/Colors";
+import {
+  getBodyFont,
+  getDisplayFont,
+  getTextDirection,
+  Spacing,
+} from "../Constants/Layout";
+import { Typography } from "../Constants/Typography";
+import { useThemeStore } from "../store/useThemeStore";
 
 interface SplashProps {
   onFinish?: () => void;
 }
 
 export default function Splash({ onFinish }: SplashProps) {
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language.startsWith("ar");
+  const isDarkMode = useThemeStore((state) => state.isDarkMode);
+  const theme = isDarkMode ? Colors.dark : Colors.light;
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* أنيميشن الريشة كما هو */}
       <LottieView
         source={require("../assets/animations/feather.json")}
@@ -18,14 +33,38 @@ export default function Splash({ onFinish }: SplashProps) {
         onAnimationFinish={onFinish}
         style={styles.animation}
       />
-      
+
       {/* حاوية النصوص لتوسيط مثالي */}
       <View style={styles.textContainer}>
         {/* الاسم الأساسي */}
-        <Text style={styles.title}>ريشة</Text>
-        
+        <Text
+          style={[
+            styles.title,
+            Typography.displayLarge,
+            {
+              color: theme.primary,
+              fontFamily: getDisplayFont(isRTL),
+              textAlign: getTextDirection(isRTL),
+            },
+          ]}
+        >
+          ريشة
+        </Text>
+
         {/* اللمسة الجمالية الجديدة: العبارة الترحيبية */}
-        <Text style={styles.subtitle}>دوّن أفكارك بنعومة</Text>
+        <Text
+          style={[
+            styles.subtitle,
+            Typography.bodyLarge,
+            {
+              color: theme.secondary,
+              fontFamily: getBodyFont(isRTL),
+              textAlign: getTextDirection(isRTL),
+            },
+          ]}
+        >
+          دوّن أفكارك بنعومة
+        </Text>
       </View>
     </View>
   );
@@ -34,7 +73,6 @@ export default function Splash({ onFinish }: SplashProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#121212", // خلفية داكنة فخمة
     justifyContent: "center",
     alignItems: "center",
   },
@@ -57,7 +95,7 @@ const styles = StyleSheet.create({
     color: "#AAAAAA", // لون رمادي خافت وهادئ
     fontSize: 16,
     fontWeight: "300", // خط أنحف
-    marginTop: 8, // مسافة بسيطة تحت العنوان
+    marginTop: Spacing.sm,
     letterSpacing: 0.5,
   },
 });

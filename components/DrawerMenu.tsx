@@ -1,8 +1,17 @@
-import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Animated,
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Colors } from "../Constants/Colors";
+import { FontFamily, Typography } from "../Constants/Typography";
+import { getRowDirection, Radius, Spacing } from "../Constants/Layout";
 
 interface DrawerMenuProps {
   drawerOpen: boolean;
@@ -28,10 +37,30 @@ export default function DrawerMenu({
   const isActive = (tab: string) => currentTab === tab;
 
   const menuItems = [
-    { tab: "index", icon: "document-text" as const, label: t("myNotes"), route: "/" },
-    { tab: "TrashPin", icon: "trash" as const, label: t("trash"), route: "./TrashPin" as const },
-    { tab: "favorites", icon: "heart" as const, label: t("favorites"), route: "./favorites" as const },
-    { tab: "settings", icon: "settings" as const, label: t("settings"), route: "./settings" },
+    {
+      tab: "index",
+      icon: "document-text" as const,
+      label: t("myNotes"),
+      route: "/",
+    },
+    {
+      tab: "TrashPin",
+      icon: "trash" as const,
+      label: t("trash"),
+      route: "./TrashPin" as const,
+    },
+    {
+      tab: "favorites",
+      icon: "heart" as const,
+      label: t("favorites"),
+      route: "./favorites" as const,
+    },
+    {
+      tab: "settings",
+      icon: "settings" as const,
+      label: t("settings"),
+      route: "./settings",
+    },
   ];
 
   const handleNavigate = (route: string) => {
@@ -49,7 +78,9 @@ export default function DrawerMenu({
           styles.drawer,
           {
             transform: [{ translateX }],
-            backgroundColor: theme.card,
+            backgroundColor: theme.surface,
+            borderColor: theme.borders,
+            borderWidth: StyleSheet.hairlineWidth,
             right: isRTL ? 0 : undefined,
             left: isRTL ? undefined : 0,
           },
@@ -59,7 +90,18 @@ export default function DrawerMenu({
           <TouchableOpacity style={styles.closeButton} onPress={toggleDrawer}>
             <Ionicons name="close" size={28} color={theme.primary} />
           </TouchableOpacity>
-          <Text style={[styles.drawerTitle, { color: theme.primary }]}>
+          <Text
+            style={[
+              styles.drawerTitle,
+              Typography.displaySmall,
+              {
+                color: theme.primary,
+                fontFamily: isRTL
+                  ? FontFamily.arabicBold
+                  : FontFamily.displayMedium,
+              },
+            ]}
+          >
             {t("title")}
           </Text>
         </View>
@@ -70,14 +112,25 @@ export default function DrawerMenu({
               key={item.tab}
               style={[
                 styles.menuItem,
-                { flexDirection: isRTL ? "row-reverse" : "row", gap: 10 },
+                { flexDirection: getRowDirection(isRTL), gap: Spacing.sm },
                 isActive(item.tab) && { backgroundColor: mainColor + "20" },
                 isActive(item.tab) && styles.activeMenuItem,
               ]}
               onPress={() => handleNavigate(item.route)}
             >
               <Ionicons name={item.icon} size={24} color={theme.primary} />
-              <Text style={[styles.menuText, { color: theme.primary }]}>
+              <Text
+                style={[
+                  styles.menuText,
+                  Typography.bodyMedium,
+                  {
+                    color: theme.primary,
+                    fontFamily: isRTL
+                      ? FontFamily.arabicRegular
+                      : FontFamily.bodyRegular,
+                  },
+                ]}
+              >
                 {item.label}
               </Text>
             </TouchableOpacity>
@@ -98,8 +151,8 @@ const styles = StyleSheet.create({
     right: 0,
     width: screenWidth * 0.75,
     height: "100%",
-    backgroundColor: "#fff",
-    shadowColor: "#000",
+    backgroundColor: Colors.light.surface,
+    shadowColor: Colors.dark.background,
     shadowOffset: { width: -2, height: 0 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
@@ -118,11 +171,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    borderBottomColor: "#eee",
+    borderBottomColor: Colors.light.borders,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   closeButton: {
-    padding: 10,
-    borderRadius: 5,
+    padding: Spacing.sm,
+    borderRadius: Radius.sm,
     paddingTop: 40,
   },
   drawerTitle: {
@@ -130,18 +184,18 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     paddingTop: 50,
     textAlign: "right",
-    paddingHorizontal: 20,
+    paddingHorizontal: Spacing.xl,
     marginBottom: 20,
   },
   drawerContent: {
     flex: 1,
-    paddingTop: 50,
-    paddingHorizontal: 20,
+    paddingTop: Spacing.huge,
+    paddingHorizontal: Spacing.xl,
   },
   menuItem: {
     alignItems: "center",
-    paddingVertical: 15,
-    paddingHorizontal: 10,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
   },
   menuText: {
     fontSize: 18,
@@ -149,7 +203,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   activeMenuItem: {
-    borderRadius: 8,
-    paddingHorizontal: 10,
+    borderRadius: Radius.sm,
+    paddingHorizontal: Spacing.sm,
   },
 });

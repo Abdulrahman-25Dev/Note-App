@@ -9,6 +9,8 @@ export const FontFamily = {
 };
 
 export const Typography = {
+  caption: { fontSize: 12, lineHeight: 16 },
+  button: { fontSize: 15, lineHeight: 20, fontWeight: "600" as const },
   displayLarge: {
     fontFamily: FontFamily.displayBold,
     fontSize: 42,
