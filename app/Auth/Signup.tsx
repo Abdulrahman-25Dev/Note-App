@@ -9,11 +9,27 @@ import {
 import { useState } from "react";
 import { TextInput } from "react-native-paper";
 import { router } from "expo-router";
+import { useTranslation } from "react-i18next";
 // 1. استيراد عميل سوبابيس من ملف الإعداد الخاص بك
 import { supabase } from "../../supabase"; // تأكد من مطابقة المسار الفعلي لملف supabase.ts
 import { useAlertStore } from "../../store/useAlertStore";
+import { Colors } from "../../Constants/Colors";
+import {
+  getBodyFont,
+  getDisplayFont,
+  getRowDirection,
+  Radius,
+  Spacing,
+} from "../../Constants/Layout";
+import { useThemeStore } from "../../store/useThemeStore";
 
 const Signup = () => {
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === "ar";
+  const isDarkMode = useThemeStore((state) => state.isDarkMode);
+  const mainColor = useThemeStore((state) => state.mainColor);
+  const theme = isDarkMode ? Colors.dark : Colors.light;
+  const buttonTextColor = getContrastingTextColor(mainColor);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -41,13 +57,12 @@ const Signup = () => {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password: password,
-        options:{
+        options: {
           data: {
             full_name: fullName,
           },
         },
-      }
-    );
+      });
 
       if (signUpError) {
         // عرض الخطأ القادم من السيرفر (مثل إيميل مستخدم مسبقاً، إلخ)
@@ -55,13 +70,13 @@ const Signup = () => {
       } else {
         if (data.user) {
           const { error: profileError } = await supabase
-            .from('profiles')
+            .from("profiles")
             .upsert([
-              { 
-                id: data.user.id, 
+              {
+                id: data.user.id,
                 username: fullName,
                 // يمكنك إضافة أي أعمدة أخرى إذا وجدت
-              }
+              },
             ]);
 
           if (profileError) {
@@ -70,23 +85,37 @@ const Signup = () => {
         }
         showAlert({
           title: "نجاح",
-          message: "تم إنشاء الحساب بنجاح! إذا تطلب الأمر تفعيل البريد، يرجى مراجعة صندوق الوارد الخاص بك.",
+          message:
+            "تم إنشاء الحساب بنجاح! إذا تطلب الأمر تفعيل البريد، يرجى مراجعة صندوق الوارد الخاص بك.",
         });
         // بعد نجاح التسجيل، نوجه المستخدم تلقائياً للواجهة الرئيسية أو شاشة الدخول
         router.replace("/");
       }
-    } catch (e) {
+    } catch {
       setError("حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة لاحقاً");
     } finally {
       setLoading(false);
     }
   };
 
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>إنشاء حساب جديد</Text>
-      <Text style={styles.subtitle}>انضم إلى عالم ريشة الذكي والآمن</Text>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Text
+        style={[
+          styles.title,
+          { color: theme.primary, fontFamily: getDisplayFont(isRTL) },
+        ]}
+      >
+        إنشاء حساب جديد
+      </Text>
+      <Text
+        style={[
+          styles.subtitle,
+          { color: theme.secondary, fontFamily: getBodyFont(isRTL) },
+        ]}
+      >
+        انضم إلى عالم ريشة الذكي والآمن
+      </Text>
 
       <View style={styles.inputContainer}>
         {/* حقل الاسم الكامل */}
@@ -102,19 +131,18 @@ const Signup = () => {
           }}
           style={styles.input}
           mode="outlined"
-          activeOutlineColor="#00B4D8"
-          outlineColor="#1E293B"
-          textColor="#F8FAFC"
-          placeholderTextColor="#64748B"
+          activeOutlineColor={mainColor}
+          outlineColor={theme.borders}
+          textColor={theme.primary}
+          placeholderTextColor={theme.tertiary}
           theme={{
-            roundness: 14,
+            roundness: Radius.md,
             colors: {
-              onSurfaceVariant: "#64748B",
-              background: "#0F172A",
+              onSurfaceVariant: theme.secondary,
+              background: theme.card,
             },
           }}
-          placeholder="example@gmail.com"
-          right={<TextInput.Icon icon="account" color="#64748B" />}
+          right={<TextInput.Icon icon="account" color={theme.secondary} />}
         />
         <TextInput
           label="البريد الالكتروني"
@@ -127,19 +155,19 @@ const Signup = () => {
           }}
           style={styles.input}
           mode="outlined"
-          activeOutlineColor="#00B4D8"
-          outlineColor="#1E293B"
-          textColor="#F8FAFC"
-          placeholderTextColor="#64748B"
+          activeOutlineColor={mainColor}
+          outlineColor={theme.borders}
+          textColor={theme.primary}
+          placeholderTextColor={theme.tertiary}
           theme={{
-            roundness: 14,
+            roundness: Radius.md,
             colors: {
-              onSurfaceVariant: "#64748B",
-              background: "#0F172A",
+              onSurfaceVariant: theme.secondary,
+              background: theme.card,
             },
           }}
           placeholder="example@gmail.com"
-          right={<TextInput.Icon icon="email" color="#64748B" />}
+          right={<TextInput.Icon icon="email" color={theme.secondary} />}
         />
 
         {/* حقل كلمة المرور */}
@@ -153,45 +181,64 @@ const Signup = () => {
           secureTextEntry={!showPassword1}
           style={styles.input}
           mode="outlined"
-          activeOutlineColor="#00B4D8"
-          outlineColor="#1E293B"
-          textColor="#F8FAFC"
-          placeholderTextColor="#64748B"
+          activeOutlineColor={mainColor}
+          outlineColor={theme.borders}
+          textColor={theme.primary}
+          placeholderTextColor={theme.tertiary}
           theme={{
-            roundness: 14,
+            roundness: Radius.md,
             colors: {
-              onSurfaceVariant: "#64748B",
-              background: "#0F172A",
+              onSurfaceVariant: theme.secondary,
+              background: theme.card,
             },
           }}
-          placeholder="••••••••"
           right={
             <TextInput.Icon
               icon={showPassword1 ? "eye-off" : "eye"}
-              color="#64748B"
+              color={theme.secondary}
               onPress={() => setShowPassword1(!showPassword1)}
             />
           }
         />
       </View>
 
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && (
+        <Text
+          style={[
+            styles.errorText,
+            { color: theme.destructive, fontFamily: getBodyFont(isRTL) },
+          ]}
+        >
+          {error}
+        </Text>
+      )}
 
       {/* زر تسجيل حساب جديد (يدعم حالة التحميل الآن) */}
       <TouchableOpacity
-        style={[styles.SignupBtn, loading && { opacity: 0.7 }]}
+        style={[
+          styles.SignupBtn,
+          { backgroundColor: mainColor, flexDirection: getRowDirection(isRTL) },
+          loading && { opacity: 0.7 },
+        ]}
         onPress={handleSignup}
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#020617" size="small" />
+          <ActivityIndicator color={buttonTextColor} size="small" />
         ) : (
           <>
             <Image
               source={require("@/assets/images/signup.png")}
               style={styles.btnIcon}
             />
-            <Text style={styles.SignupText}>إنشاء حساب</Text>
+            <Text
+              style={[
+                styles.SignupText,
+                { color: buttonTextColor, fontFamily: getBodyFont(isRTL) },
+              ]}
+            >
+              إنشاء حساب
+            </Text>
           </>
         )}
       </TouchableOpacity>
@@ -201,7 +248,14 @@ const Signup = () => {
         onPress={() => router.replace("/Auth/Login")}
         style={styles.backLogin}
       >
-        <Text style={styles.backLoginText}>لديك حساب بالفعل؟ تسجيل الدخول</Text>
+        <Text
+          style={[
+            styles.backLoginText,
+            { color: mainColor, fontFamily: getBodyFont(isRTL) },
+          ]}
+        >
+          لديك حساب بالفعل؟ تسجيل الدخول
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -209,63 +263,57 @@ const Signup = () => {
 
 export default Signup;
 
+function getContrastingTextColor(hexColor: string) {
+  const normalizedColor = hexColor.replace("#", "");
+  const red = parseInt(normalizedColor.slice(0, 2), 16);
+  const green = parseInt(normalizedColor.slice(2, 4), 16);
+  const blue = parseInt(normalizedColor.slice(4, 6), 16);
+  const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+
+  return luminance > 0.6 ? "#000000" : "#FFFFFF";
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#020617",
-    paddingHorizontal: 20,
-  },
-  logo: {
-    width: 70,
-    height: 70,
-    marginBottom: 12,
-    shadowColor: "#00B4D8",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+    paddingHorizontal: Spacing.xl,
   },
   title: {
-    fontSize: 22,
+    fontSize: 32,
     fontWeight: "800",
-    color: "#F8FAFC",
-    marginBottom: 6,
+    marginBottom: Spacing.xs,
   },
   subtitle: {
     fontSize: 13,
-    marginBottom: 20,
-    color: "#64748B",
+    marginBottom: Spacing.xl,
     fontWeight: "500",
   },
   inputContainer: {
     width: "100%",
     maxWidth: 320,
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
   input: {
     width: "100%",
-    marginBottom: 10,
+    marginBottom: Spacing.md,
   },
   errorText: {
-    color: "#EF4444",
     fontSize: 12,
     alignSelf: "center",
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
     fontWeight: "500",
   },
   SignupBtn: {
-    flexDirection: "row",
     width: "100%",
     maxWidth: 320,
-    height: 50,
+    height: 52,
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: Radius.lg,
     justifyContent: "center",
-    backgroundColor: "#00B4D8",
-    marginTop: 6,
-    shadowColor: "#00B4D8",
+    marginTop: Spacing.xs,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -273,65 +321,18 @@ const styles = StyleSheet.create({
   btnIcon: {
     width: 18,
     height: 18,
-    marginRight: 8,
-    tintColor: "#020617",
+    marginHorizontal: Spacing.sm,
   },
   SignupText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#020617",
   },
   backLogin: {
-    marginTop: 12,
-    padding: 5,
+    marginTop: Spacing.md,
+    padding: Spacing.xs,
   },
   backLoginText: {
     fontSize: 13,
-    color: "#00B4D8",
-    fontWeight: "600",
-  },
-  OrContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 18,
-    width: "100%",
-    maxWidth: 320,
-  },
-  OrLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#1E293B",
-  },
-  OrText: {
-    marginHorizontal: 12,
-    color: "#475569",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  socialContainer: {
-    width: "100%",
-    maxWidth: 320,
-  },
-  socialBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
-    width: "100%",
-    height: 48,
-    backgroundColor: "#0F172A",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#1E293B",
-  },
-  socialIcon: {
-    width: 22,
-    height: 22,
-    marginRight: 12,
-  },
-  socialText: {
-    fontSize: 14,
-    color: "#E2E8F0",
     fontWeight: "600",
   },
 });

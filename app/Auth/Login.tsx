@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Button, TextInput } from "react-native-paper";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useTranslation } from "react-i18next";
 // 1. استيراد عميل سوبابيس من الملف الذي أنشأناه سابقاً
 import { supabase } from "../../supabase"; // تأكد من مطابقة المسار الفعلي لملف supabase.ts في مشروعك
 import {
@@ -17,8 +18,23 @@ import {
   migrateLegacyProfileCache,
 } from "../../profileService";
 import { useAuthStore } from "../../store/useAuthStore";
+import { Colors } from "../../Constants/Colors";
+import {
+  getBodyFont,
+  getDisplayFont,
+  getRowDirection,
+  Radius,
+  Spacing,
+} from "../../Constants/Layout";
+import { useThemeStore } from "../../store/useThemeStore";
 
 const Login = () => {
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === "ar";
+  const isDarkMode = useThemeStore((state) => state.isDarkMode);
+  const mainColor = useThemeStore((state) => state.mainColor);
+  const theme = isDarkMode ? Colors.dark : Colors.light;
+  const buttonTextColor = getContrastingTextColor(mainColor);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -71,7 +87,7 @@ const Login = () => {
 
         router.replace("/");
       }
-    } catch (e) {
+    } catch {
       setError("حدث خطأ غير متوقع أثناء الاتصال بالسيرفر");
     } finally {
       setLoading(false);
@@ -79,7 +95,7 @@ const Login = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* شعار ريشة الفخم في الأعلى لربط الهوية البصرية
       <Image 
         source={require("../../assets/images/icon.png")} // تأكد من مطابقة مسار أيقونة ريشة الجديدة بدون الكلمة العربية
@@ -87,8 +103,22 @@ const Login = () => {
         resizeMode="contain"
       /> */}
 
-      <Text style={styles.title}>تسجيل الدخول</Text>
-      <Text style={styles.subtitle}>الوصول الآمن لمذكراتك الذكية</Text>
+      <Text
+        style={[
+          styles.title,
+          { color: theme.primary, fontFamily: getDisplayFont(isRTL) },
+        ]}
+      >
+        تسجيل الدخول
+      </Text>
+      <Text
+        style={[
+          styles.subtitle,
+          { color: theme.secondary, fontFamily: getBodyFont(isRTL) },
+        ]}
+      >
+        الوصول الآمن لمذكراتك الذكية
+      </Text>
 
       {/* حقل البريد الإلكتروني */}
       <TextInput
@@ -103,19 +133,19 @@ const Login = () => {
         textContentType="emailAddress"
         autoCapitalize="none" // يمنع تكبير الحرف الأول تلقائياً في الإيميل لتجنب الأخطاء
         error={!!error}
-        activeOutlineColor="#00B4D8"
-        outlineColor="#1E293B"
-        textColor="#F8FAFC"
-        placeholderTextColor="#64748B"
+        activeOutlineColor={mainColor}
+        outlineColor={theme.borders}
+        textColor={theme.primary}
+        placeholderTextColor={theme.secondary}
         theme={{
-          roundness: 14,
+          roundness: Radius.md,
           colors: {
-            onSurfaceVariant: "#64748B",
-            background: "#0F172A",
+            onSurfaceVariant: theme.secondary,
+            background: theme.card,
           },
         }}
         style={styles.inputs}
-        right={<TextInput.Icon icon="email" color="#64748B" />}
+        right={<TextInput.Icon icon="email" color={theme.secondary} />}
       />
 
       {/* حقل كلمة المرور */}
@@ -129,44 +159,67 @@ const Login = () => {
         }}
         secureTextEntry={!showPassword}
         mode="outlined"
-        activeOutlineColor="#00B4D8"
-        outlineColor="#1E293B"
-        textColor="#F8FAFC"
-        placeholderTextColor="#64748B"
+        activeOutlineColor={mainColor}
+        outlineColor={theme.borders}
+        textColor={theme.primary}
+        placeholderTextColor={theme.secondary}
         theme={{
-          roundness: 14,
+          roundness: Radius.md,
           colors: {
-            onSurfaceVariant: "#64748B",
-            background: "#0F172A",
+            onSurfaceVariant: theme.secondary,
+            background: theme.card,
           },
         }}
         style={styles.inputs}
         right={
           <TextInput.Icon
             icon={showPassword ? "eye-off" : "eye"}
-            color="#64748B"
+            color={theme.secondary}
             onPress={() => setShowPassword(!showPassword)}
           />
         }
       />
 
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && (
+        <Text
+          style={[
+            styles.errorText,
+            { color: theme.destructive, fontFamily: getBodyFont(isRTL) },
+          ]}
+        >
+          {error}
+        </Text>
+      )}
 
       {/* زر تسجيل الدخول بلون الـ Teal المضيء (محدث ليدعم حالة التحميل) */}
       <TouchableOpacity
         onPress={handleLogin}
-        style={[styles.login, loading && { opacity: 0.7 }]}
+        style={[
+          styles.login,
+          { backgroundColor: mainColor, flexDirection: getRowDirection(isRTL) },
+          loading && { opacity: 0.7 },
+        ]}
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#020617" size="small" />
+          <ActivityIndicator color={buttonTextColor} size="small" />
         ) : (
           <>
             <Image
               source={require("@/assets/images/user.png")}
               style={styles.loginIcon}
             />
-            <Text style={styles.loginText}>تسجيل الدخول</Text>
+            <Text
+              style={[
+                styles.loginText,
+                {
+                  color: buttonTextColor,
+                  fontFamily: getBodyFont(isRTL),
+                },
+              ]}
+            >
+              تسجيل الدخول
+            </Text>
           </>
         )}
       </TouchableOpacity>
@@ -174,10 +227,14 @@ const Login = () => {
       {/* زر الانتقال لإنشاء الحساب */}
       <Button
         mode="text"
-        textColor="#00B4D8"
+        textColor={mainColor}
         onPress={() => router.replace("./Signup")}
         style={styles.New}
-        labelStyle={{ fontSize: 13, fontWeight: "600" }}
+        labelStyle={{
+          fontSize: 13,
+          fontWeight: "600",
+          fontFamily: getBodyFont(isRTL),
+        }}
       >
         ليس لديك حساب؟ أنشئ حسابا جديدا
       </Button>
@@ -187,58 +244,52 @@ const Login = () => {
 
 export default Login;
 
+function getContrastingTextColor(hexColor: string) {
+  const normalizedColor = hexColor.replace("#", "");
+  const red = parseInt(normalizedColor.slice(0, 2), 16);
+  const green = parseInt(normalizedColor.slice(2, 4), 16);
+  const blue = parseInt(normalizedColor.slice(4, 6), 16);
+  const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+
+  return luminance > 0.6 ? "#000000" : "#FFFFFF";
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 20,
-    backgroundColor: "#020617",
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 16,
-    shadowColor: "#00B4D8",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+    paddingHorizontal: Spacing.xl,
   },
   title: {
-    fontSize: 22,
+    fontSize: 32,
     fontWeight: "800",
-    color: "#F8FAFC",
-    marginBottom: 6,
+    marginBottom: Spacing.xs,
   },
   subtitle: {
     fontSize: 13,
-    marginBottom: 24,
-    color: "#64748B",
+    marginBottom: Spacing.xxl,
     fontWeight: "500",
   },
   inputs: {
     width: "100%",
     maxWidth: 320,
-    marginBottom: 12,
+    marginBottom: Spacing.md,
   },
   errorText: {
-    color: "#EF4444",
     fontSize: 12,
     alignSelf: "center",
-    marginBottom: 10,
+    marginBottom: Spacing.md,
     fontWeight: "500",
   },
   login: {
-    flexDirection: "row",
     width: "100%",
     maxWidth: 320,
-    height: 50,
+    height: 52,
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: Radius.lg,
     justifyContent: "center",
-    backgroundColor: "#00B4D8",
-    marginTop: 8,
-    shadowColor: "#00B4D8",
+    marginTop: Spacing.sm,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -246,62 +297,13 @@ const styles = StyleSheet.create({
   loginIcon: {
     width: 18,
     height: 18,
-    marginRight: 8,
-    tintColor: "#020617",
+    marginHorizontal: Spacing.sm,
   },
   loginText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#020617",
   },
   New: {
-    marginTop: 10,
-  },
-  dividerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 20,
-    width: "100%",
-    maxWidth: 320,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#1E293B",
-  },
-  or: {
-    marginHorizontal: 12,
-    fontSize: 14,
-    color: "#475569",
-    fontWeight: "600",
-  },
-  iconsContainer: {
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    maxWidth: 320,
-  },
-  socialButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
-    width: "100%",
-    height: 48,
-    backgroundColor: "#0F172A",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#1E293B",
-  },
-  socialIcon: {
-    width: 22,
-    height: 22,
-    marginRight: 12,
-  },
-  socialText: {
-    fontSize: 14,
-    color: "#E2E8F0",
-    fontWeight: "600",
+    marginTop: Spacing.sm,
   },
 });
