@@ -2,12 +2,10 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import NetInfo from "@react-native-community/netinfo";
 import { useFocusEffect } from "@react-navigation/native";
 import { Image } from "expo-image";
-import { router, useSegments } from "expo-router";
+import { router } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Animated,
-  Dimensions,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,21 +15,20 @@ import {
 } from "react-native";
 import { Switch } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import DrawerMenu from "../components/DrawerMenu";
-import SharedModal from "../components/sharedModal";
-import { Colors } from "../Constants/Colors";
+import SharedModal from "../../components/sharedModal";
+import { Colors } from "../../Constants/Colors";
 import {
   getCachedAvatar,
   getCachedProfileData,
   LAST_USER_ID_KEY,
   refreshProfileData,
   saveAvatarCache,
-} from "../profileService";
-import { useAlertStore } from "../store/useAlertStore";
-import { useAuthStore } from "../store/useAuthStore";
-import { useNotesStore } from "../store/useNotesStore";
-import { useThemeStore } from "../store/useThemeStore";
-import { supabase } from "../supabase";
+} from "../../profileService";
+import { useAlertStore } from "../../store/useAlertStore";
+import { useAuthStore } from "../../store/useAuthStore";
+import { useNotesStore } from "../../store/useNotesStore";
+import { useThemeStore } from "../../store/useThemeStore";
+import { supabase } from "../../supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ColorPicker, {
   Panel1,
@@ -52,11 +49,6 @@ export default function Settings() {
   const theme = isDarkMode ? Colors.dark : Colors.light;
   const isRTL = i18n.language === "ar";
 
-  const { width } = Dimensions.get("window");
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const animatedValue = useRef(new Animated.Value(0)).current;
-  const segments = useSegments();
-  const currentTab = segments[1] || "settings";
   const [colorPickerVisible, setColorPickerVisible] = useState(false);
   const [selectedColor, setSelectedColor] = useState(mainColor);
   const [cachedAvatarUri, setCachedAvatarUri] = useState<string | null>(null);
@@ -75,22 +67,6 @@ export default function Settings() {
   useEffect(() => {
     console.log("حالة الجلسة الحالية:", session);
   }, [session]);
-
-  // دالة لفتح وإغلاق الـ drawer
-  const toggleDrawer = () => {
-    const toValue = drawerOpen ? 0 : 1;
-    setDrawerOpen(!drawerOpen);
-    Animated.timing(animatedValue, {
-      toValue,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const translateX = animatedValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: isRTL ? [width, 0] : [-width, 0],
-  });
 
   const getContrastingColor = (hexColor: string) => {
     try {
@@ -248,7 +224,7 @@ export default function Settings() {
                 title: t("success"),
                 message: t("deleteAccountSuccess"),
               });
-              router.replace("./Auth/Login");
+              router.replace("/Auth/Login");
             } catch (error: any) {
               showAlert({
                 title: t("error"),
@@ -271,7 +247,7 @@ export default function Settings() {
     ) || null;
   const avatarSource = displayedAvatarUri
     ? { uri: displayedAvatarUri }
-    : require("../assets/images/user.png");
+    : require("../../assets/images/user.png");
   const shouldPromptLogin =
     sessionStatus === "invalid" || (hasPreviousLogin && !session);
 
@@ -289,9 +265,6 @@ export default function Settings() {
           <Text style={[styles.headerTitle, { color: theme.primary }]}>
             {t("settings")}
           </Text>
-          <TouchableOpacity onPress={toggleDrawer} style={styles.menuButton}>
-            <Ionicons name="menu" size={24} color={theme.primary} />
-          </TouchableOpacity>
         </View>
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <View style={[styles.content, { backgroundColor: theme.background }]}>
@@ -669,7 +642,7 @@ export default function Settings() {
                               }
 
                               try {
-                                router.replace("../Auth/Login");
+                                router.replace("/Auth/Login");
                               } catch (e) {
                                 console.log("Navigation to Login failed:", e);
                               }
@@ -783,7 +756,7 @@ export default function Settings() {
                 ]}
               >
                 <Pressable
-                  onPress={() => router.push("./about")}
+                  onPress={() => router.push("/about")}
                   style={[
                     styles.options,
                     { flexDirection: isRTL ? "row-reverse" : "row" },
@@ -799,15 +772,6 @@ export default function Settings() {
           </View>
         </ScrollView>
       </SafeAreaView>
-      <DrawerMenu
-        drawerOpen={drawerOpen}
-        translateX={translateX}
-        isRTL={isRTL}
-        theme={theme}
-        mainColor={mainColor}
-        currentTab={currentTab}
-        toggleDrawer={toggleDrawer}
-      />
     </View>
   );
 }
@@ -852,12 +816,6 @@ const styles = StyleSheet.create({
   Line: {
     height: 2,
     marginBottom: 10,
-  },
-  menuButton: {
-    padding: 5,
-    position: "absolute",
-    right: 20,
-    top: 20,
   },
   profileImage: {
     flexDirection: "row",

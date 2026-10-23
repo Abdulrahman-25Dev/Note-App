@@ -4,23 +4,19 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
-  Animated,
-  Dimensions,
   TextInput,
   Pressable,
   Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
-import { router, useSegments } from "expo-router";
-import { useState, useRef } from "react";
-import { useThemeStore } from "../store/useThemeStore";
-import { Colors } from "../Constants/Colors";
+import { router } from "expo-router";
+import { useState } from "react";
+import { useThemeStore } from "../../store/useThemeStore";
+import { Colors } from "../../Constants/Colors";
 import { useTranslation } from "react-i18next";
-import i18n from "../i18n/i18n";
-import SharedModal from "../components/sharedModal";
-import DrawerMenu from "../components/DrawerMenu";
-import { useNotesStore } from "../store/useNotesStore";
+import SharedModal from "../../components/sharedModal";
+import { useNotesStore } from "../../store/useNotesStore";
 
 const TrashPin = () => {
   const deletepermanentlyNote = useNotesStore((s) => s.deletepermanentlyNote);
@@ -30,13 +26,7 @@ const TrashPin = () => {
   const [showModal, setShowModal] = useState(false);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [showRestoreAllModal, setShowRestoreAllModal] = useState(false);
-  const isRTL = i18n.language === "ar";
   const { t } = useTranslation();
-  const { width } = Dimensions.get("window");
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const animatedValue = useRef(new Animated.Value(0)).current;
-  const segments = useSegments();
-  const currentTab = segments[1] || "TrashPin";
 
   // جلب الثيم
   const { isDarkMode } = useThemeStore();
@@ -53,29 +43,15 @@ const TrashPin = () => {
   const handleDeleteAllTrash = () => {
     deleteAllTrash();
     setShowDeleteAllModal(false);
-    router.push("./TrashPin" as any);
+    router.push("/(tabs)/TrashPin");
   };
 
   const handleRestoreAllTrash = () => {
     restoreAllDeleted();
     setShowRestoreAllModal(false);
-    router.push("./TrashPin" as any);
+    router.push("/(tabs)/TrashPin");
   };
 
-  const toggleDrawer = () => {
-    const toValue = drawerOpen ? 0 : 1;
-    setDrawerOpen(!drawerOpen);
-    Animated.timing(animatedValue, {
-      toValue,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const translateX = animatedValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: isRTL ? [width, 0] : [-width, 0],
-  });
   const mainColor = useThemeStore((state) => state.mainColor);
 
   return (
@@ -83,22 +59,43 @@ const TrashPin = () => {
       <SafeAreaView edges={["top"]} style={styles.container}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Pressable onPress={() => setShowDeleteAllModal(true)} style={[styles.headerActionButton, { backgroundColor: theme.card }]}>
+            <Pressable
+              onPress={() => setShowDeleteAllModal(true)}
+              style={[
+                styles.headerActionButton,
+                { backgroundColor: theme.card },
+              ]}
+            >
               <Ionicons name="trash" size={22} color={"#DAA7A3"} />
             </Pressable>
-            <Pressable onPress={() => setShowRestoreAllModal(true)} style={[styles.headerActionButton, { backgroundColor: theme.card }]}>
+            <Pressable
+              onPress={() => setShowRestoreAllModal(true)}
+              style={[
+                styles.headerActionButton,
+                { backgroundColor: theme.card },
+              ]}
+            >
               <Ionicons name="refresh" size={22} color={"#00B4D8"} />
             </Pressable>
           </View>
-          <Text style={[styles.headerTitle, { color: theme.primary }]}>{t("trash")}</Text>
-          <TouchableOpacity onPress={toggleDrawer} style={styles.menuButton}>
-            <Ionicons name="menu" size={24} color={theme.primary} />
-          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: theme.primary }]}>
+            {t("trash")}
+          </Text>
         </View>
 
         <View style={[styles.showNotes, { backgroundColor: theme.background }]}>
-          <View style={[styles.searchbar, { backgroundColor: theme.card, borderColor: mainColor }]}>
-            <Ionicons name="search" size={20} color={mainColor} style={{ marginLeft: 8 }} />
+          <View
+            style={[
+              styles.searchbar,
+              { backgroundColor: theme.card, borderColor: mainColor },
+            ]}
+          >
+            <Ionicons
+              name="search"
+              size={20}
+              color={mainColor}
+              style={{ marginLeft: 8 }}
+            />
             <TextInput
               value={search}
               onChangeText={(text) => setSearch(text)}
@@ -108,30 +105,82 @@ const TrashPin = () => {
               placeholderTextColor={theme.secondary}
             />
           </View>
-          <SharedModal visible={showDeleteAllModal} onClose={() => setShowDeleteAllModal(false)} onRequestClose={() => setShowDeleteAllModal(false)}>
-            <View style={[styles.modalContainer, { backgroundColor: theme.card }]}>
-              <Text style={[styles.titleModal, { color: theme.primary }]}>{t("DELALLTrash")}</Text>
-              <Text style={[styles.textModal, { color: theme.primary }]}>{t("sureDELALLTrash")}</Text>
+          <SharedModal
+            visible={showDeleteAllModal}
+            onClose={() => setShowDeleteAllModal(false)}
+            onRequestClose={() => setShowDeleteAllModal(false)}
+          >
+            <View
+              style={[styles.modalContainer, { backgroundColor: theme.card }]}
+            >
+              <Text style={[styles.titleModal, { color: theme.primary }]}>
+                {t("DELALLTrash")}
+              </Text>
+              <Text style={[styles.textModal, { color: theme.primary }]}>
+                {t("sureDELALLTrash")}
+              </Text>
               <View style={styles.modalButtons}>
-                <TouchableOpacity style={[styles.modalDeleteBtn, { backgroundColor: "#DC2626" }]} onPress={handleDeleteAllTrash}>
-                  <Text style={{ color: "#ffffff", fontWeight: "bold" }}>{t("DEL")}</Text>
+                <TouchableOpacity
+                  style={[
+                    styles.modalDeleteBtn,
+                    { backgroundColor: "#DC2626" },
+                  ]}
+                  onPress={handleDeleteAllTrash}
+                >
+                  <Text style={{ color: "#ffffff", fontWeight: "bold" }}>
+                    {t("DEL")}
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.modalCancelBtn, { backgroundColor: "#3B82F6" }]} onPress={() => setShowDeleteAllModal(false)}>
-                  <Text style={{ color: "#fff", fontWeight: "bold" }}>{t("CAN")}</Text>
+                <TouchableOpacity
+                  style={[
+                    styles.modalCancelBtn,
+                    { backgroundColor: "#3B82F6" },
+                  ]}
+                  onPress={() => setShowDeleteAllModal(false)}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                    {t("CAN")}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
           </SharedModal>
-          <SharedModal visible={showRestoreAllModal} onClose={() => setShowRestoreAllModal(false)} onRequestClose={() => setShowRestoreAllModal(false)}>
-            <View style={[styles.modalContainer, { backgroundColor: theme.card }]}>
-              <Text style={[styles.titleModal, { color: theme.primary }]}>{t("restoreAllTrash")}</Text>
-              <Text style={[styles.textModal, { color: theme.primary }]}>{t("sureRestoreAllTrash")}</Text>
+          <SharedModal
+            visible={showRestoreAllModal}
+            onClose={() => setShowRestoreAllModal(false)}
+            onRequestClose={() => setShowRestoreAllModal(false)}
+          >
+            <View
+              style={[styles.modalContainer, { backgroundColor: theme.card }]}
+            >
+              <Text style={[styles.titleModal, { color: theme.primary }]}>
+                {t("restoreAllTrash")}
+              </Text>
+              <Text style={[styles.textModal, { color: theme.primary }]}>
+                {t("sureRestoreAllTrash")}
+              </Text>
               <View style={styles.modalButtons}>
-                <TouchableOpacity style={[styles.modalRestoreBtn, { backgroundColor: "#10B981" }]} onPress={handleRestoreAllTrash}>
-                  <Text style={{ color: "#ffffff", fontWeight: "bold" }}>{t("Restore")}</Text>
+                <TouchableOpacity
+                  style={[
+                    styles.modalRestoreBtn,
+                    { backgroundColor: "#10B981" },
+                  ]}
+                  onPress={handleRestoreAllTrash}
+                >
+                  <Text style={{ color: "#ffffff", fontWeight: "bold" }}>
+                    {t("Restore")}
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.modalCancelBtn, { backgroundColor: "#3B82F6" }]} onPress={() => setShowRestoreAllModal(false)}>
-                  <Text style={{ color: "#fff", fontWeight: "bold" }}>{t("CAN")}</Text>
+                <TouchableOpacity
+                  style={[
+                    styles.modalCancelBtn,
+                    { backgroundColor: "#3B82F6" },
+                  ]}
+                  onPress={() => setShowRestoreAllModal(false)}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                    {t("CAN")}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -142,28 +191,85 @@ const TrashPin = () => {
             numColumns={2}
             renderItem={({ item }) => (
               <View style={styles.noteContainer}>
-                <View style={[styles.note, { backgroundColor: theme.card, borderColor: mainColor }]}>
-                  <Text style={[styles.noteTitle, { color: theme.primary }]} numberOfLines={1}>{item.title}</Text>
-                  <Text style={[styles.noteContent, { color: theme.secondary }]} numberOfLines={1}>{item.content}</Text>
+                <View
+                  style={[
+                    styles.note,
+                    { backgroundColor: theme.card, borderColor: mainColor },
+                  ]}
+                >
+                  <Text
+                    style={[styles.noteTitle, { color: theme.primary }]}
+                    numberOfLines={1}
+                  >
+                    {item.title}
+                  </Text>
+                  <Text
+                    style={[styles.noteContent, { color: theme.secondary }]}
+                    numberOfLines={1}
+                  >
+                    {item.content}
+                  </Text>
                   <View style={styles.noteActions}>
-                    <TouchableOpacity style={[styles.deleteButton, { backgroundColor: theme.card }]} onPress={() => setShowModal(true)}>
+                    <TouchableOpacity
+                      style={[
+                        styles.deleteButton,
+                        { backgroundColor: theme.card },
+                      ]}
+                      onPress={() => setShowModal(true)}
+                    >
                       <Ionicons name="trash" size={22} color="#EE8A8A" />
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.restoreButton, { backgroundColor: theme.card }]} onPress={() => restoreNote(item.id)}>
+                    <TouchableOpacity
+                      style={[
+                        styles.restoreButton,
+                        { backgroundColor: theme.card },
+                      ]}
+                      onPress={() => restoreNote(item.id)}
+                    >
                       <Ionicons name="refresh" size={22} color="#00B4D8" />
                     </TouchableOpacity>
                   </View>
                 </View>
-                <Modal visible={showModal} animationType="fade" transparent onRequestClose={() => setShowModal(false)}>
+                <Modal
+                  visible={showModal}
+                  animationType="fade"
+                  transparent
+                  onRequestClose={() => setShowModal(false)}
+                >
                   <View style={styles.overlay2}>
-                    <View style={[styles.MessageContainer, { backgroundColor: theme.card, borderColor: theme.borders }]}>
-                      <Text style={[styles.MessageTitle, { color: theme.primary }]}>{t("ofcorse?")}</Text>
-                      <Text style={[styles.MessageText, { color: theme.primary }]}>{t("ofcorseText?")}</Text>
+                    <View
+                      style={[
+                        styles.MessageContainer,
+                        {
+                          backgroundColor: theme.card,
+                          borderColor: theme.borders,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[styles.MessageTitle, { color: theme.primary }]}
+                      >
+                        {t("ofcorse?")}
+                      </Text>
+                      <Text
+                        style={[styles.MessageText, { color: theme.primary }]}
+                      >
+                        {t("ofcorseText?")}
+                      </Text>
                       <View style={styles.buttonContainer}>
-                        <TouchableOpacity style={styles.DELBtn} onPress={() => { deletepermanentlyNote(item.id); setShowModal(false); }}>
+                        <TouchableOpacity
+                          style={styles.DELBtn}
+                          onPress={() => {
+                            deletepermanentlyNote(item.id);
+                            setShowModal(false);
+                          }}
+                        >
                           <Text style={styles.DELBtnText}>{t("DEL")}</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setShowModal(false)} style={styles.CANBtn}>
+                        <TouchableOpacity
+                          onPress={() => setShowModal(false)}
+                          style={styles.CANBtn}
+                        >
                           <Text style={styles.CANBtnText}>{t("CAN")}</Text>
                         </TouchableOpacity>
                       </View>
@@ -182,15 +288,6 @@ const TrashPin = () => {
           />
         </View>
       </SafeAreaView>
-      <DrawerMenu
-        drawerOpen={drawerOpen}
-        translateX={translateX}
-        isRTL={isRTL}
-        theme={theme}
-        mainColor={mainColor}
-        currentTab={currentTab}
-        toggleDrawer={toggleDrawer}
-      />
     </View>
   );
 };
@@ -221,9 +318,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  menuButton: {
-    marginRight: 5,
-  },
   headerTitle: {
     fontSize: 16,
     fontWeight: "bold",
@@ -235,7 +329,9 @@ const styles = StyleSheet.create({
   },
   showNotes: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 20,
     backgroundColor: "#EEF2FF",
   },
   searchbar: {

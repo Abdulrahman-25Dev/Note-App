@@ -4,39 +4,23 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
-  Animated,
-  Dimensions,
   TextInput,
   Pressable,
 } from "react-native";
 // import { useState, useEffect } from 'react'
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
-import { router, useSegments } from "expo-router";
-import { useState, useRef } from "react";
-import { useThemeStore } from "../store/useThemeStore";
-import { Colors } from "../Constants/Colors";
+import { router } from "expo-router";
+import { useState } from "react";
+import { useThemeStore } from "../../store/useThemeStore";
+import { Colors } from "../../Constants/Colors";
 import { useTranslation } from "react-i18next";
-import i18n from "../i18n/i18n";
-import SharedModal from "../components/sharedModal";
-import DrawerMenu from "../components/DrawerMenu";
-import { useNotesStore } from "../store/useNotesStore";
+import SharedModal from "../../components/sharedModal";
+import { useNotesStore } from "../../store/useNotesStore";
 
 // مكون صفحة المفضلة، مبني بنفس طريقة سلة المحذوفات
 const Favorites = () => {
-  const isRTL = i18n.language === "ar";
-
   const { t } = useTranslation();
-  // الحصول على عرض الشاشة للـ Drawer
-  const { width } = Dimensions.get("window");
-  // حالة فتح/إغلاق الـ Drawer
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  // مرجع للرسوم المتحركة
-  const animatedValue = useRef(new Animated.Value(0)).current;
-  // الحصول على المسار الحالي
-  const segments = useSegments();
-  const currentTab = segments[1] || "favorites";
-
   // جلب الثيم
   const { isDarkMode } = useThemeStore();
   const theme = isDarkMode ? Colors.dark : Colors.light;
@@ -45,16 +29,22 @@ const Favorites = () => {
 
   const getContrastingColor = (hexColor: string) => {
     try {
-      const hex = hexColor.replace('#', '');
-      const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+      const hex = hexColor.replace("#", "");
+      const fullHex =
+        hex.length === 3
+          ? hex
+              .split("")
+              .map((c) => c + c)
+              .join("")
+          : hex;
       const bigint = parseInt(fullHex, 16);
       const r = (bigint >> 16) & 255;
       const g = (bigint >> 8) & 255;
       const b = bigint & 255;
       const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-      return brightness > 128 ? '#000000' : '#FFFFFF';
+      return brightness > 128 ? "#000000" : "#FFFFFF";
     } catch (e) {
-      return '#FFFFFF';
+      return "#FFFFFF";
     }
   };
 
@@ -78,25 +68,8 @@ const Favorites = () => {
   const handleClearFavorites = () => {
     removeAllFavorites();
     setShowClearFavoritesModal(false);
-    router.push("./favorites" as any);
+    router.push("/(tabs)/favorites");
   };
-
-  // دالة لفتح/إغلاق الـ Drawer
-  const toggleDrawer = () => {
-    const toValue = drawerOpen ? 0 : 1;
-    setDrawerOpen(!drawerOpen);
-    Animated.timing(animatedValue, {
-      toValue,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  // تحويل القيمة المتحركة إلى إزاحة أفقية
-  const translateX = animatedValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: isRTL ? [width, 0] : [-width, 0],
-  });
 
   // الواجهة الرئيسية للصفحة
   return (
@@ -112,14 +85,21 @@ const Favorites = () => {
           <Text style={[styles.headerTitle, { color: theme.primary }]}>
             {t("favorites")}
           </Text>
-          <TouchableOpacity onPress={toggleDrawer} style={styles.menuButton}>
-            <Ionicons name="menu" size={24} color={theme.primary} />
-          </TouchableOpacity>
         </View>
 
         <View style={[styles.showNotes, { backgroundColor: theme.background }]}>
-          <View style={[styles.searchbar, { backgroundColor: theme.card, borderColor: mainColor }]}>
-            <Ionicons name="search" size={20} color={mainColor} style={{ marginLeft: 8 }} />
+          <View
+            style={[
+              styles.searchbar,
+              { backgroundColor: theme.card, borderColor: mainColor },
+            ]}
+          >
+            <Ionicons
+              name="search"
+              size={20}
+              color={mainColor}
+              style={{ marginLeft: 8 }}
+            />
             <TextInput
               value={search}
               onChangeText={(text) => setSearch(text)}
@@ -135,12 +115,37 @@ const Favorites = () => {
             numColumns={2}
             renderItem={({ item }) => (
               <View style={styles.noteContainer}>
-                <View style={[styles.note, { borderColor: mainColor, backgroundColor: theme.card }]}>
-                  <Text style={[styles.noteTitle, { color: theme.primary }]} numberOfLines={1}>{item.title}</Text>
-                  <Text style={[styles.noteContent, { color: theme.secondary }]} numberOfLines={1}>{item.content}</Text>
+                <View
+                  style={[
+                    styles.note,
+                    { borderColor: mainColor, backgroundColor: theme.card },
+                  ]}
+                >
+                  <Text
+                    style={[styles.noteTitle, { color: theme.primary }]}
+                    numberOfLines={1}
+                  >
+                    {item.title}
+                  </Text>
+                  <Text
+                    style={[styles.noteContent, { color: theme.secondary }]}
+                    numberOfLines={1}
+                  >
+                    {item.content}
+                  </Text>
                   <View style={styles.noteActions}>
-                    <TouchableOpacity style={[styles.removeButton, { backgroundColor: mainColor }]} onPress={() => toggleFavorite(item.id)}>
-                      <Ionicons name="heart-dislike" size={20} color={getContrastingColor(mainColor)} />
+                    <TouchableOpacity
+                      style={[
+                        styles.removeButton,
+                        { backgroundColor: mainColor },
+                      ]}
+                      onPress={() => toggleFavorite(item.id)}
+                    >
+                      <Ionicons
+                        name="heart-dislike"
+                        size={20}
+                        color={getContrastingColor(mainColor)}
+                      />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -155,30 +160,41 @@ const Favorites = () => {
             )}
           />
         </View>
-        <SharedModal visible={showClearFavoritesModal} onClose={() => setShowClearFavoritesModal(false)} onRequestClose={() => setShowClearFavoritesModal(false)}>
-          <View style={[styles.modalContainer, { backgroundColor: theme.card }]}>
-            <Text style={[styles.titleModal, { color: theme.primary }]}>{t("RMEALLFavorites")}</Text>
-            <Text style={[styles.textModal, { color: theme.primary }]}>{t("sureRMEALLFavorites")}</Text>
+        <SharedModal
+          visible={showClearFavoritesModal}
+          onClose={() => setShowClearFavoritesModal(false)}
+          onRequestClose={() => setShowClearFavoritesModal(false)}
+        >
+          <View
+            style={[styles.modalContainer, { backgroundColor: theme.card }]}
+          >
+            <Text style={[styles.titleModal, { color: theme.primary }]}>
+              {t("RMEALLFavorites")}
+            </Text>
+            <Text style={[styles.textModal, { color: theme.primary }]}>
+              {t("sureRMEALLFavorites")}
+            </Text>
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.DELBtn, { backgroundColor: "#DC2626" }]} onPress={handleClearFavorites}>
-                <Text style={{ color: "#ffffff", fontWeight: "bold" }}>{t("DEL")}</Text>
+              <TouchableOpacity
+                style={[styles.DELBtn, { backgroundColor: "#DC2626" }]}
+                onPress={handleClearFavorites}
+              >
+                <Text style={{ color: "#ffffff", fontWeight: "bold" }}>
+                  {t("DEL")}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.CancelBtn, { backgroundColor: "#3B82F6" }]} onPress={() => setShowClearFavoritesModal(false)}>
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>{t("CAN")}</Text>
+              <TouchableOpacity
+                style={[styles.CancelBtn, { backgroundColor: "#3B82F6" }]}
+                onPress={() => setShowClearFavoritesModal(false)}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  {t("CAN")}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         </SharedModal>
       </SafeAreaView>
-      <DrawerMenu
-        drawerOpen={drawerOpen}
-        translateX={translateX}
-        isRTL={isRTL}
-        theme={theme}
-        mainColor={mainColor}
-        currentTab={currentTab}
-        toggleDrawer={toggleDrawer}
-      />
     </View>
   );
 };
@@ -197,9 +213,6 @@ const styles = StyleSheet.create({
     paddingVertical: 22,
     position: "relative",
   },
-  menuButton: {
-    marginRight: 5,
-  },
   headerTitle: {
     fontSize: 16,
     fontWeight: "bold",
@@ -213,7 +226,9 @@ const styles = StyleSheet.create({
   },
   showNotes: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 20,
     backgroundColor: "#EEF2FF",
   },
   searchbar: {
