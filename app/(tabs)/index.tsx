@@ -22,6 +22,7 @@ import { useTranslation } from "react-i18next";
 import SharedModal from "../../components/sharedModal";
 import { useNotesStore } from "../../store/useNotesStore";
 import { useAlertStore } from "../../store/useAlertStore";
+import { getBodyFont, Radius, Spacing } from "../../Constants/Layout";
 
 export default function Index() {
   useEffect(() => {
@@ -70,7 +71,8 @@ export default function Index() {
     showAlert({ title: t("copied"), message: t("copiedMessage") });
   };
 
-  const { t } = useTranslation();
+  const { t, i18n: translation } = useTranslation();
+  const isRTL = translation.language === "ar";
   const deleteAllNotes = useNotesStore((state) => state.deleteAllNotes);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -96,30 +98,54 @@ export default function Index() {
         </View>
 
         <View style={[styles.showNotes, { backgroundColor: theme.background }]}>
-          <View
-            style={[
-              styles.searchbar,
-              {
-                backgroundColor: theme.card,
-                borderColor: mainColor,
-                borderWidth: 0.5,
-              },
-            ]}
-          >
-            <Ionicons
-              name="search"
-              size={20}
-              color={mainColor}
-              style={{ marginLeft: 8 }}
-            />
-            <TextInput
-              value={search}
-              onChangeText={(text) => setSearch(text)}
-              placeholder={t("search")}
-              style={[styles.search, { color: theme.primary }]}
-              textAlign="right"
-              placeholderTextColor={theme.secondary}
-            />
+          <View style={styles.searchbarWrapper}>
+            <View
+              style={[
+                styles.searchbar,
+                {
+                  backgroundColor: theme.surface,
+                  borderColor: theme.borders,
+                  flexDirection: isRTL ? "row-reverse" : "row",
+                  paddingHorizontal: Spacing.md,
+                  marginBottom: Spacing.lg,
+                },
+              ]}
+            >
+              <Ionicons
+                name="search"
+                size={20}
+                color={mainColor}
+                style={{ marginHorizontal: Spacing.sm }}
+              />
+              <TextInput
+                value={search}
+                onChangeText={(text) => setSearch(text)}
+                placeholder="ابحث في ملاحظاتي..."
+                style={[
+                  styles.search,
+                  {
+                    color: theme.primary,
+                    fontFamily: getBodyFont(isRTL),
+                    textAlign: isRTL ? "right" : "left",
+                  },
+                ]}
+                placeholderTextColor={theme.tertiary}
+              />
+              {search.length > 0 && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="مسح البحث"
+                  onPress={() => setSearch("")}
+                  hitSlop={8}
+                >
+                  <Ionicons
+                    name="close-circle"
+                    size={18}
+                    color={theme.tertiary}
+                  />
+                </Pressable>
+              )}
+            </View>
           </View>
           <FlatList
             data={filteredNotes}
@@ -261,20 +287,21 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   searchbar: {
-    flexDirection: "row",
+    width: "100%",
+    height: 48,
     alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 15,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    marginBottom: 15,
-    elevation: 2,
+    borderRadius: Radius.round,
+    borderWidth: 1,
+  },
+  searchbarWrapper: {
+    paddingTop: 4,
   },
   search: {
     flex: 1,
-    fontSize: 16,
-    textAlign: "right",
-    paddingHorizontal: 10,
+    height: "100%",
+    fontSize: 15,
+    paddingVertical: 0,
+    textAlignVertical: "center",
   },
   showNotes: {
     flex: 1,

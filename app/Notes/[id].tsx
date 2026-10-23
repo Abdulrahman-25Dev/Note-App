@@ -19,6 +19,7 @@ import "dayjs/locale/ar";
 import { useThemeStore } from "../../store/useThemeStore";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Colors } from "../../Constants/Colors";
+import { getTitleFont, Radius, Spacing } from "../../Constants/Layout";
 import { useTranslation } from "react-i18next";
 import { useNotesStore } from "../../store/useNotesStore";
 
@@ -26,7 +27,8 @@ dayjs.extend(relativeTime);
 dayjs.locale("ar");
 
 const Details = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === "ar";
 
   const { isDarkMode, mainColor } = useThemeStore();
   const theme = isDarkMode ? Colors.dark : Colors.light;
@@ -60,7 +62,10 @@ const Details = () => {
 
   useEffect(() => {
     return () => {
-      updateNote(noteId, { title: titleRef.current, content: contentRef.current });
+      updateNote(noteId, {
+        title: titleRef.current,
+        content: contentRef.current,
+      });
     };
   }, []);
 
@@ -83,7 +88,7 @@ const Details = () => {
     >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={[styles.header, { backgroundColor: theme.background }]}>
           <View style={styles.headerLeft}>
@@ -91,45 +96,40 @@ const Details = () => {
               style={[styles.delete, { backgroundColor: theme.card }]}
               onPress={() => setShowModal(true)}
             >
-              <Ionicons
-                name="trash"
-                size={24}
-                color="#DAA7A4"
-              />
+              <Ionicons name="trash" size={22} color="#DAA7A4" />
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.share, { backgroundColor: theme.card }]}
               onPress={shareNote}
             >
-              <Ionicons
-                name="share-social"
-                size={24}
-                color={mainColor}
-              />
+              <Ionicons name="share-social" size={22} color={mainColor} />
             </TouchableOpacity>
           </View>
           <TouchableOpacity onPress={() => router.back()} style={styles.back}>
-            <Ionicons
-              name="arrow-forward"
-              size={24}
-              color={mainColor}
-            />
+            <Ionicons name="arrow-forward" size={28} color={mainColor} />
           </TouchableOpacity>
         </View>
 
         <View style={[styles.body, { backgroundColor: theme.background }]}>
           <TextInput
-            style={[styles.title, { color: theme.primary }]}
+            style={[
+              styles.title,
+              {
+                color: theme.primary,
+                fontFamily: getTitleFont(isRTL),
+              },
+            ]}
             value={title}
             onChangeText={setTitle}
             placeholderTextColor={theme.secondary}
             placeholder="..."
           />
           <View style={styles.line} />
-          <Text style={[styles.date, { color: theme.primary }]}>
+          <Text style={[styles.date, { color: theme.secondary }]}>
             {dayjs(note?.createdAt).format("DD MMMM YYYY - hh:mm A")}
           </Text>
           <ScrollView
+            showsVerticalScrollIndicator={false}
             contentContainerStyle={{ flexGrow: 1 }}
             keyboardShouldPersistTaps="handled"
           >
@@ -210,21 +210,20 @@ const styles = StyleSheet.create({
   back: {
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    borderRadius: Radius.md,
+    padding: Spacing.sm,
   },
   delete: {
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: Radius.md,
     width: 44,
     height: 44,
   },
   share: {
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: Radius.md,
     width: 44,
     height: 44,
   },
@@ -235,18 +234,17 @@ const styles = StyleSheet.create({
   line: {
     height: 1,
     backgroundColor: "gray",
-    marginVertical: 10,
+    marginVertical: Spacing.md,
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: Spacing.lg,
     padding: 0,
   },
   date: {
     fontSize: 14,
-    color: "gray",
-    marginBottom: 10,
+    marginBottom: Spacing.md,
     textAlign: "right",
   },
   contentText: {

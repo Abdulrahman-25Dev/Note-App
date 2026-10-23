@@ -17,6 +17,7 @@ import { Colors } from "../../Constants/Colors";
 import { useTranslation } from "react-i18next";
 import SharedModal from "../../components/sharedModal";
 import { useNotesStore } from "../../store/useNotesStore";
+import { getBodyFont, Radius, Spacing } from "../../Constants/Layout";
 
 const TrashPin = () => {
   const deletepermanentlyNote = useNotesStore((s) => s.deletepermanentlyNote);
@@ -26,7 +27,8 @@ const TrashPin = () => {
   const [showModal, setShowModal] = useState(false);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [showRestoreAllModal, setShowRestoreAllModal] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === "ar";
 
   // جلب الثيم
   const { isDarkMode } = useThemeStore();
@@ -84,26 +86,54 @@ const TrashPin = () => {
         </View>
 
         <View style={[styles.showNotes, { backgroundColor: theme.background }]}>
-          <View
-            style={[
-              styles.searchbar,
-              { backgroundColor: theme.card, borderColor: mainColor },
-            ]}
-          >
-            <Ionicons
-              name="search"
-              size={20}
-              color={mainColor}
-              style={{ marginLeft: 8 }}
-            />
-            <TextInput
-              value={search}
-              onChangeText={(text) => setSearch(text)}
-              placeholder={t("search")}
-              style={[styles.search, { color: theme.primary }]}
-              textAlign="right"
-              placeholderTextColor={theme.secondary}
-            />
+          <View style={styles.searchbarWrapper}>
+            <View
+              style={[
+                styles.searchbar,
+                {
+                  backgroundColor: theme.surface,
+                  borderColor: theme.borders,
+                  flexDirection: isRTL ? "row-reverse" : "row",
+                  paddingHorizontal: Spacing.md,
+                  marginBottom: Spacing.lg,
+                },
+              ]}
+            >
+              <Ionicons
+                name="search"
+                size={20}
+                color={mainColor}
+                style={{ marginHorizontal: Spacing.sm }}
+              />
+              <TextInput
+                value={search}
+                onChangeText={(text) => setSearch(text)}
+                placeholder="ابحث في المحذوفات..."
+                style={[
+                  styles.search,
+                  {
+                    color: theme.primary,
+                    fontFamily: getBodyFont(isRTL),
+                    textAlign: isRTL ? "right" : "left",
+                  },
+                ]}
+                placeholderTextColor={theme.tertiary}
+              />
+              {search.length > 0 && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="مسح البحث"
+                  onPress={() => setSearch("")}
+                  hitSlop={8}
+                >
+                  <Ionicons
+                    name="close-circle"
+                    size={18}
+                    color={theme.tertiary}
+                  />
+                </Pressable>
+              )}
+            </View>
           </View>
           <SharedModal
             visible={showDeleteAllModal}
@@ -330,26 +360,25 @@ const styles = StyleSheet.create({
   showNotes: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 8,
     paddingBottom: 20,
     backgroundColor: "#EEF2FF",
   },
   searchbar: {
-    flexDirection: "row",
+    width: "100%",
+    height: 48,
     alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 15,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    marginBottom: 15,
-    elevation: 2,
+    borderRadius: Radius.round,
     borderWidth: 1,
+  },
+  searchbarWrapper: {
+    paddingTop: 4,
   },
   search: {
     flex: 1,
-    fontSize: 16,
-    textAlign: "right",
-    paddingHorizontal: 10,
+    height: "100%",
+    fontSize: 15,
+    paddingVertical: 0,
+    textAlignVertical: "center",
   },
   noteContainer: {
     flex: 1,
