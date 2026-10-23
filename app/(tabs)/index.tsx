@@ -40,7 +40,7 @@ export default function Index() {
 
     // استدعاء جلب المذكرات من سوبابيس فوراً
     fetchNotes();
-  }, []);
+  }, [fetchNotes]);
 
   // جلب الثيم من الـ store
   const { isDarkMode } = useThemeStore();
@@ -226,7 +226,10 @@ export default function Index() {
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalDeleteBtn, { backgroundColor: "#DC2626" }]}
+                style={[
+                  styles.modalDeleteBtn,
+                  { backgroundColor: theme.destructive },
+                ]}
                 onPress={handleDeleteAllNotes}
               >
                 <Text style={{ color: "#ffffff", fontWeight: "bold" }}>
@@ -234,10 +237,16 @@ export default function Index() {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalCancelBtn, { backgroundColor: "#3B82F6" }]}
+                style={[
+                  styles.modalCancelBtn,
+                  {
+                    backgroundColor: "transparent",
+                    borderColor: theme.borders,
+                  },
+                ]}
                 onPress={() => setShowDeleteModal(false)}
               >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                <Text style={{ color: theme.primary, fontWeight: "bold" }}>
                   {t("CAN")}
                 </Text>
               </TouchableOpacity>
@@ -385,5 +394,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
+    borderWidth: 1,
   },
 });

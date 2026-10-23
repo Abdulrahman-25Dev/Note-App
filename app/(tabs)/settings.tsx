@@ -84,7 +84,7 @@ export default function Settings() {
       const b = bigint & 255;
       const brightness = (r * 299 + g * 587 + b * 114) / 1000;
       return brightness > 128 ? "#000000" : "#FFFFFF";
-    } catch (e) {
+    } catch {
       return "#FFFFFF";
     }
   };
@@ -541,7 +541,7 @@ export default function Settings() {
                     {t("editProfile")}
                   </Text>
                   <TouchableOpacity
-                    onPress={() => handleProtectedNavigation("./EditProfile")}
+                    onPress={() => handleProtectedNavigation("../EditProfile")}
                     style={[
                       styles.DeleteBtn,
                       { backgroundColor: theme.card, borderColor: mainColor },
@@ -568,7 +568,7 @@ export default function Settings() {
                   </Text>
                   <TouchableOpacity
                     onPress={() =>
-                      handleProtectedNavigation("./ChangePassword")
+                      handleProtectedNavigation("../ChangePassword")
                     }
                     style={[
                       styles.DeleteBtn,

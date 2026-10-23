@@ -45,7 +45,7 @@ const Favorites = () => {
       const b = bigint & 255;
       const brightness = (r * 299 + g * 587 + b * 114) / 1000;
       return brightness > 128 ? "#000000" : "#FFFFFF";
-    } catch (e) {
+    } catch {
       return "#FFFFFF";
     }
   };
@@ -206,7 +206,7 @@ const Favorites = () => {
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.DELBtn, { backgroundColor: "#DC2626" }]}
+                style={[styles.DELBtn, { backgroundColor: theme.destructive }]}
                 onPress={handleClearFavorites}
               >
                 <Text style={{ color: "#ffffff", fontWeight: "bold" }}>
@@ -214,10 +214,16 @@ const Favorites = () => {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.CancelBtn, { backgroundColor: "#3B82F6" }]}
+                style={[
+                  styles.CancelBtn,
+                  {
+                    backgroundColor: "transparent",
+                    borderColor: theme.borders,
+                  },
+                ]}
                 onPress={() => setShowClearFavoritesModal(false)}
               >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                <Text style={{ color: theme.primary, fontWeight: "bold" }}>
                   {t("CAN")}
                 </Text>
               </TouchableOpacity>
@@ -358,5 +364,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
+    borderWidth: 1,
   },
 });

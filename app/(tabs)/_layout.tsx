@@ -54,7 +54,9 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         {
           backgroundColor: theme.surface,
           borderColor: theme.borders,
-          paddingBottom: insets.bottom,
+          height: styles.tabBar.height + insets.bottom + 8,
+          paddingHorizontal: 12,
+          paddingBottom: insets.bottom + 8,
         },
       ]}
     >
@@ -106,14 +108,20 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           </Fragment>
         );
       })}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t("add")}
-        onPress={() => router.push("/Notes/Add")}
-        style={[styles.fab, { backgroundColor: mainColor }]}
-      >
-        <Ionicons name="add" size={32} color={getContrastingColor(mainColor)} />
-      </Pressable>
+      <View style={styles.fabPosition} pointerEvents="box-none">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("add")}
+          onPress={() => router.push("/Notes/Add")}
+          style={[styles.fab, { backgroundColor: mainColor }]}
+        >
+          <Ionicons
+            name="add"
+            size={32}
+            color={getContrastingColor(mainColor)}
+          />
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -150,16 +158,19 @@ const styles = StyleSheet.create({
   fabSpace: {
     width: 88,
   },
+  fabPosition: {
+    position: "absolute",
+    top: -25,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
   tabLabel: {
     fontSize: 10,
   },
   fab: {
-    position: "absolute",
-    top: -25,
-    left: "50%",
     width: 62,
     height: 62,
-    marginLeft: -31,
     borderRadius: 31,
     alignItems: "center",
     justifyContent: "center",

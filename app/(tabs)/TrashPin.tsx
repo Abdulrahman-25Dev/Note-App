@@ -153,7 +153,7 @@ const TrashPin = () => {
                 <TouchableOpacity
                   style={[
                     styles.modalDeleteBtn,
-                    { backgroundColor: "#DC2626" },
+                    { backgroundColor: theme.destructive },
                   ]}
                   onPress={handleDeleteAllTrash}
                 >
@@ -164,11 +164,14 @@ const TrashPin = () => {
                 <TouchableOpacity
                   style={[
                     styles.modalCancelBtn,
-                    { backgroundColor: "#3B82F6" },
+                    {
+                      backgroundColor: "transparent",
+                      borderColor: theme.borders,
+                    },
                   ]}
                   onPress={() => setShowDeleteAllModal(false)}
                 >
-                  <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  <Text style={{ color: theme.primary, fontWeight: "bold" }}>
                     {t("CAN")}
                   </Text>
                 </TouchableOpacity>
@@ -204,11 +207,14 @@ const TrashPin = () => {
                 <TouchableOpacity
                   style={[
                     styles.modalCancelBtn,
-                    { backgroundColor: "#3B82F6" },
+                    {
+                      backgroundColor: "transparent",
+                      borderColor: theme.borders,
+                    },
                   ]}
                   onPress={() => setShowRestoreAllModal(false)}
                 >
-                  <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  <Text style={{ color: theme.primary, fontWeight: "bold" }}>
                     {t("CAN")}
                   </Text>
                 </TouchableOpacity>
@@ -288,7 +294,10 @@ const TrashPin = () => {
                       </Text>
                       <View style={styles.buttonContainer}>
                         <TouchableOpacity
-                          style={styles.DELBtn}
+                          style={[
+                            styles.DELBtn,
+                            { backgroundColor: theme.destructive },
+                          ]}
                           onPress={() => {
                             deletepermanentlyNote(item.id);
                             setShowModal(false);
@@ -298,9 +307,22 @@ const TrashPin = () => {
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => setShowModal(false)}
-                          style={styles.CANBtn}
+                          style={[
+                            styles.CANBtn,
+                            {
+                              backgroundColor: "transparent",
+                              borderColor: theme.borders,
+                            },
+                          ]}
                         >
-                          <Text style={styles.CANBtnText}>{t("CAN")}</Text>
+                          <Text
+                            style={[
+                              styles.CANBtnText,
+                              { color: theme.primary },
+                            ]}
+                          >
+                            {t("CAN")}
+                          </Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -481,6 +503,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
+    borderWidth: 1,
   },
   modalRestoreBtn: {
     justifyContent: "center",
@@ -533,10 +556,10 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   CANBtn: {
-    backgroundColor: "#3B82F6",
     padding: 15,
     justifyContent: "center",
     borderRadius: 10,
+    borderWidth: 1,
   },
   CANBtnText: {
     fontSize: 16,
