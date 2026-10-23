@@ -2,6 +2,7 @@ import "../i18n/i18n";
 import { Slot, router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo, { NetInfoState } from "@react-native-community/netinfo";
+import { useFonts } from "expo-font";
 import { useEffect, useRef, useState } from "react";
 import { AppState, I18nManager } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -15,6 +16,15 @@ I18nManager.forceRTL(false);
 export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true);
   const lastOnlineState = useRef<boolean | null>(null);
+  const [fontsLoaded] = useFonts({
+    "PlayfairDisplay-Bold": require("../assets/fonts/PlayfairDisplay-Bold.ttf"),
+    "PlayfairDisplay-SemiBold": require("../assets/fonts/PlayfairDisplay-SemiBold.ttf"),
+    "PlayfairDisplay-Medium": require("../assets/fonts/PlayfairDisplay-Medium.ttf"),
+    "Inter-Regular": require("../assets/fonts/Inter-Regular.ttf"),
+    "Inter-Medium": require("../assets/fonts/Inter-Medium.ttf"),
+    "IBMPlexSansArabic-Regular": require("../assets/fonts/IBMPlexSansArabic-Regular.ttf"),
+    "IBMPlexSansArabic-Bold": require("../assets/fonts/IBMPlexSansArabic-Bold.ttf"),
+  });
 
   useEffect(() => {
     const isOnline = (state: NetInfoState) =>
@@ -74,7 +84,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      {showSplash ? <Splash /> : <Slot />}
+      {showSplash || !fontsLoaded ? <Splash /> : <Slot />}
       <CustomAlert />
     </SafeAreaProvider>
   );

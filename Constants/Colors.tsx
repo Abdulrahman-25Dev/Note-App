@@ -1,17 +1,32 @@
-
 export const Colors = {
-    light: {
-        background: '#F3F4F6',
-        card: '#f9f9f9',
-        primary: '#111827',
-        secondary: '#6B7280',
-        borders: '#E5E7EB',
-    },
-    dark: {
-        background: '#121212',
-        card: '#1E1E1E',
-        primary: '#f9f9f9',
-        secondary: '#9CA3AF',
-        borders: '#2D2D2D', 
-    }
-}
+  dark: {
+    background: "#0A0A0A",
+    card: "#141414",
+    primary: "#FAFAFA",
+    secondary: "#A1A1A1",
+    borders: "#262626",
+    surface: "#141414",
+    surfaceElevated: "#1A1A1A",
+    tertiary: "#6B6B6B",
+    bordersLight: "#1F1F1F",
+    destructive: "#EF4444",
+    success: "#10B981",
+    warning: "#F59E0B",
+    info: "#3B82F6",
+  },
+  light: {
+    background: "#FAFAF9",
+    card: "#FFFFFF",
+    primary: "#1A1A1A",
+    secondary: "#6B6B6B",
+    borders: "#E7E5E4",
+    surface: "#FFFFFF",
+    surfaceElevated: "#FFFFFF",
+    tertiary: "#A1A1A1",
+    bordersLight: "#F5F5F4",
+    destructive: "#EF4444",
+    success: "#10B981",
+    warning: "#F59E0B",
+    info: "#3B82F6",
+  },
+};
