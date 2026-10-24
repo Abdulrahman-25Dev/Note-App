@@ -6,12 +6,14 @@ import {
   FlatList,
   TextInput,
   Pressable,
+  Animated,
+  Easing,
 } from "react-native";
 // import { useState, useEffect } from 'react'
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useThemeStore } from "../../store/useThemeStore";
 import { Colors } from "../../Constants/Colors";
 import { useTranslation } from "react-i18next";
@@ -57,6 +59,33 @@ const Favorites = () => {
   // تحميل الملاحظات المفضلة عند فتح الصفحة
   const allNotes = useNotesStore((state) => state.notes);
   const favorites = allNotes.filter((note) => note.favorite);
+  const cardAnimations = useRef(new Map<string, Animated.Value>());
+  const animatedNoteIds = useRef(new Set<string>());
+
+  favorites.forEach((note) => {
+    if (!cardAnimations.current.has(note.id)) {
+      cardAnimations.current.set(note.id, new Animated.Value(0));
+    }
+  });
+
+  useEffect(() => {
+    favorites.forEach((note, index) => {
+      if (animatedNoteIds.current.has(note.id)) return;
+
+      animatedNoteIds.current.add(note.id);
+      const animation = cardAnimations.current.get(note.id);
+      if (!animation) return;
+
+      Animated.timing(animation, {
+        toValue: 1,
+        duration: 300,
+        delay: index * 50,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }).start();
+    });
+  }, [favorites]);
+
   // فلترة الملاحظات بناءً على البحث
   const filteredNotes = favorites.filter(
     (note) =>
@@ -80,9 +109,15 @@ const Favorites = () => {
         <View style={styles.header}>
           <Pressable
             onPress={() => setShowClearFavoritesModal(true)}
-            style={[styles.headerActionButton, { backgroundColor: theme.card }]}
+            style={[
+              styles.headerActionButton,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.borders,
+              },
+            ]}
           >
-            <Ionicons name="heart-dislike" size={22} color={"#DAA7A3"} />
+            <Ionicons name="heart-dislike" size={22} color={theme.primary} />
           </Pressable>
           <Text style={[styles.headerTitle, { color: theme.primary }]}>
             {t("favorites")}
@@ -145,40 +180,62 @@ const Favorites = () => {
             numColumns={2}
             renderItem={({ item }) => (
               <View style={styles.noteContainer}>
-                <View
-                  style={[
-                    styles.note,
-                    { borderColor: mainColor, backgroundColor: theme.card },
-                  ]}
+                <Animated.View
+                  style={{
+                    opacity: cardAnimations.current.get(item.id)!,
+                    transform: [
+                      {
+                        translateY: cardAnimations.current
+                          .get(item.id)!
+                          .interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [20, 0],
+                          }),
+                      },
+                    ],
+                  }}
                 >
-                  <Text
-                    style={[styles.noteTitle, { color: theme.primary }]}
-                    numberOfLines={1}
+                  <View
+                    style={[
+                      styles.note,
+                      { borderColor: mainColor, backgroundColor: theme.card },
+                    ]}
                   >
-                    {item.title}
-                  </Text>
-                  <Text
-                    style={[styles.noteContent, { color: theme.secondary }]}
-                    numberOfLines={1}
-                  >
-                    {item.content}
-                  </Text>
-                  <View style={styles.noteActions}>
-                    <TouchableOpacity
-                      style={[
-                        styles.removeButton,
-                        { backgroundColor: mainColor },
-                      ]}
-                      onPress={() => toggleFavorite(item.id)}
+                    <Pressable
+                      onPress={() =>
+                        router.push(`/Notes/${item.id}?from=favorites`)
+                      }
                     >
-                      <Ionicons
-                        name="heart-dislike"
-                        size={20}
-                        color={getContrastingColor(mainColor)}
-                      />
-                    </TouchableOpacity>
+                      <Text
+                        style={[styles.noteTitle, { color: theme.primary }]}
+                        numberOfLines={1}
+                      >
+                        {item.title}
+                      </Text>
+                      <Text
+                        style={[styles.noteContent, { color: theme.secondary }]}
+                        numberOfLines={1}
+                      >
+                        {item.content}
+                      </Text>
+                    </Pressable>
+                    <View style={styles.noteActions}>
+                      <TouchableOpacity
+                        style={[
+                          styles.removeButton,
+                          { backgroundColor: mainColor },
+                        ]}
+                        onPress={() => toggleFavorite(item.id)}
+                      >
+                        <Ionicons
+                          name="heart-dislike"
+                          size={20}
+                          color={getContrastingColor(mainColor)}
+                        />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
+                </Animated.View>
               </View>
             )}
             ListEmptyComponent={() => (
@@ -246,7 +303,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 22,
+    paddingTop: 22,
+    paddingBottom: 10,
     position: "relative",
   },
   headerTitle: {
@@ -256,7 +314,8 @@ const styles = StyleSheet.create({
   headerActionButton: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: Radius.round,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -1,4 +1,4 @@
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import NetInfo from "@react-native-community/netinfo";
 import { useFocusEffect } from "@react-navigation/native";
 import { Image } from "expo-image";
@@ -17,6 +17,12 @@ import { Switch } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SharedModal from "../../components/sharedModal";
 import { Colors } from "../../Constants/Colors";
+import {
+  getBodyFont,
+  getTitleFont,
+  Radius,
+  Spacing,
+} from "../../Constants/Layout";
 import {
   getCachedAvatar,
   getCachedProfileData,
@@ -271,7 +277,15 @@ export default function Settings() {
             <View
               style={[
                 styles.profileImage,
-                { backgroundColor: theme.background },
+                {
+                  backgroundColor: theme.background,
+                  flexDirection: isRTL ? "row-reverse" : "row",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  paddingHorizontal: Spacing.xl,
+                  marginTop: Spacing.xl,
+                  gap: Spacing.md,
+                },
               ]}
             >
               <Image
@@ -306,13 +320,28 @@ export default function Settings() {
                     fontSize: 16,
                     fontWeight: "bold",
                     color: theme.primary,
+                    fontFamily: getTitleFont(isRTL),
+                    textAlign: isRTL ? "right" : "left",
+                    writingDirection: isRTL ? "rtl" : "ltr",
                   }}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
                 >
                   {profile?.username ||
                     session?.user?.user_metadata?.full_name ||
                     "مستخدم ريشة"}
                 </Text>
-                <Text style={{ color: theme.secondary }} ellipsizeMode="tail">
+                <Text
+                  style={{
+                    color: theme.secondary,
+                    fontSize: 14,
+                    fontFamily: getBodyFont(isRTL),
+                    textAlign: isRTL ? "right" : "left",
+                    writingDirection: isRTL ? "rtl" : "ltr",
+                  }}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {/* ⚡ القراءة من profile.email أولاً تضمن ظهور الإيميل أوفلاين ولحظياً بدون flicker */}
                   {profile?.email || session?.user?.email || "غير مسجل"}
                 </Text>
@@ -350,7 +379,10 @@ export default function Settings() {
                 style={[
                   styles.sectionTitle,
                   {
-                    color: theme.secondary,
+                    color: theme.primary,
+                    fontFamily: getTitleFont(isRTL),
+                    fontSize: 16,
+                    marginBottom: Spacing.sm,
                     textAlign: isRTL ? "right" : "left",
                   },
                 ]}
@@ -360,7 +392,10 @@ export default function Settings() {
               <View
                 style={[
                   styles.optionsContainer,
-                  { borderColor: theme.borders, backgroundColor: theme.card },
+                  {
+                    borderColor: theme.bordersLight,
+                    backgroundColor: theme.surface,
+                  },
                 ]}
               >
                 <View
@@ -368,13 +403,21 @@ export default function Settings() {
                     styles.options,
                     { flexDirection: isRTL ? "row-reverse" : "row" },
                     {
-                      backgroundColor: theme.card,
-                      borderColor: theme.borders,
-                      borderRadius: 30,
+                      backgroundColor: theme.surface,
+                      borderColor: theme.bordersLight,
                     },
                   ]}
                 >
-                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                  <Text
+                    style={[
+                      styles.optionText,
+                      {
+                        color: theme.primary,
+                        fontFamily: getBodyFont(isRTL),
+                        textAlign: isRTL ? "right" : "left",
+                      },
+                    ]}
+                  >
                     {t("theme")}
                   </Text>
                   <Switch
@@ -386,16 +429,28 @@ export default function Settings() {
                   />
                 </View>
                 <View
-                  style={[styles.Line, { backgroundColor: theme.borders }]}
+                  style={[styles.Line, { backgroundColor: theme.bordersLight }]}
                 />
                 <View
                   style={[
                     styles.options,
                     { flexDirection: isRTL ? "row-reverse" : "row" },
-                    { backgroundColor: theme.card, borderColor: theme.borders },
+                    {
+                      backgroundColor: theme.surface,
+                      borderColor: theme.bordersLight,
+                    },
                   ]}
                 >
-                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                  <Text
+                    style={[
+                      styles.optionText,
+                      {
+                        color: theme.primary,
+                        fontFamily: getBodyFont(isRTL),
+                        textAlign: isRTL ? "right" : "left",
+                      },
+                    ]}
+                  >
                     {t("appColor")}
                   </Text>
                   <View
@@ -453,16 +508,28 @@ export default function Settings() {
                   </View>
                 </View>
                 <View
-                  style={[styles.Line, { backgroundColor: theme.borders }]}
+                  style={[styles.Line, { backgroundColor: theme.bordersLight }]}
                 />
                 <View
                   style={[
                     styles.options,
                     { flexDirection: isRTL ? "row-reverse" : "row" },
-                    { backgroundColor: theme.card, borderColor: theme.borders },
+                    {
+                      backgroundColor: theme.surface,
+                      borderColor: theme.bordersLight,
+                    },
                   ]}
                 >
-                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                  <Text
+                    style={[
+                      styles.optionText,
+                      {
+                        color: theme.primary,
+                        fontFamily: getBodyFont(isRTL),
+                        textAlign: isRTL ? "right" : "left",
+                      },
+                    ]}
+                  >
                     {t("language")}
                   </Text>
                   <View style={styles.languageRow}>
@@ -481,7 +548,11 @@ export default function Settings() {
                       <Text
                         style={[
                           styles.optionText,
-                          { color: theme.primary, fontWeight: "bold" },
+                          {
+                            color: theme.primary,
+                            fontFamily: getBodyFont(isRTL),
+                            fontWeight: "bold",
+                          },
                         ]}
                       >
                         ع
@@ -502,7 +573,11 @@ export default function Settings() {
                       <Text
                         style={[
                           styles.optionText,
-                          { color: theme.primary, fontWeight: "bold" },
+                          {
+                            color: theme.primary,
+                            fontFamily: getBodyFont(isRTL),
+                            fontWeight: "bold",
+                          },
                         ]}
                       >
                         En
@@ -517,8 +592,10 @@ export default function Settings() {
                 style={[
                   styles.sectionTitle,
                   {
-                    color: theme.secondary,
-                    marginRight: 20,
+                    color: theme.primary,
+                    fontFamily: getTitleFont(isRTL),
+                    fontSize: 16,
+                    marginBottom: Spacing.sm,
                     textAlign: isRTL ? "right" : "left",
                   },
                 ]}
@@ -528,7 +605,10 @@ export default function Settings() {
               <View
                 style={[
                   styles.optionsContainer2,
-                  { borderColor: theme.borders, backgroundColor: theme.card },
+                  {
+                    borderColor: theme.bordersLight,
+                    backgroundColor: theme.surface,
+                  },
                 ]}
               >
                 <View
@@ -537,25 +617,37 @@ export default function Settings() {
                     { flexDirection: isRTL ? "row-reverse" : "row" },
                   ]}
                 >
-                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                  <Text
+                    style={[
+                      styles.optionText,
+                      {
+                        color: theme.primary,
+                        fontFamily: getBodyFont(isRTL),
+                        textAlign: isRTL ? "right" : "left",
+                      },
+                    ]}
+                  >
                     {t("editProfile")}
                   </Text>
                   <TouchableOpacity
-                    onPress={() => handleProtectedNavigation("../EditProfile")}
+                    onPress={() => handleProtectedNavigation("/EditProfile")}
                     style={[
                       styles.DeleteBtn,
-                      { backgroundColor: theme.card, borderColor: mainColor },
+                      {
+                        backgroundColor: theme.background,
+                        borderColor: theme.borders,
+                      },
                     ]}
                   >
                     <Ionicons
-                      name="person-outline"
-                      size={24}
+                      name="create-outline"
+                      size={21}
                       color={mainColor}
                     />
                   </TouchableOpacity>
                 </View>
                 <View
-                  style={[styles.Line, { backgroundColor: theme.borders }]}
+                  style={[styles.Line, { backgroundColor: theme.bordersLight }]}
                 />
                 <View
                   style={[
@@ -563,7 +655,16 @@ export default function Settings() {
                     { flexDirection: isRTL ? "row-reverse" : "row" },
                   ]}
                 >
-                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                  <Text
+                    style={[
+                      styles.optionText,
+                      {
+                        color: theme.primary,
+                        fontFamily: getBodyFont(isRTL),
+                        textAlign: isRTL ? "right" : "left",
+                      },
+                    ]}
+                  >
                     {t("changePassword")}
                   </Text>
                   <TouchableOpacity
@@ -572,18 +673,21 @@ export default function Settings() {
                     }
                     style={[
                       styles.DeleteBtn,
-                      { backgroundColor: theme.card, borderColor: mainColor },
+                      {
+                        backgroundColor: theme.background,
+                        borderColor: theme.borders,
+                      },
                     ]}
                   >
                     <Ionicons
                       name="lock-closed-outline"
-                      size={24}
+                      size={21}
                       color={mainColor}
                     />
                   </TouchableOpacity>
                 </View>
                 <View
-                  style={[styles.Line, { backgroundColor: theme.borders }]}
+                  style={[styles.Line, { backgroundColor: theme.bordersLight }]}
                 />
                 <View
                   style={[
@@ -591,21 +695,37 @@ export default function Settings() {
                     { flexDirection: isRTL ? "row-reverse" : "row" },
                   ]}
                 >
-                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                  <Text
+                    style={[
+                      styles.optionText,
+                      {
+                        color: theme.primary,
+                        fontFamily: getBodyFont(isRTL),
+                        textAlign: isRTL ? "right" : "left",
+                      },
+                    ]}
+                  >
                     {t("deleteAccount")}
                   </Text>
                   <TouchableOpacity
                     onPress={handleDeleteAccount}
                     style={[
                       styles.DeleteBtn,
-                      { backgroundColor: "red", borderColor: theme.borders },
+                      {
+                        backgroundColor: theme.background,
+                        borderColor: theme.destructive,
+                      },
                     ]}
                   >
-                    <Ionicons name="trash-outline" size={24} color={"white"} />
+                    <Ionicons
+                      name="trash-outline"
+                      size={21}
+                      color={theme.destructive}
+                    />
                   </TouchableOpacity>
                 </View>
                 <View
-                  style={[styles.Line, { backgroundColor: theme.borders }]}
+                  style={[styles.Line, { backgroundColor: theme.bordersLight }]}
                 />
                 <View
                   style={[
@@ -613,7 +733,16 @@ export default function Settings() {
                     { flexDirection: isRTL ? "row-reverse" : "row" },
                   ]}
                 >
-                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                  <Text
+                    style={[
+                      styles.optionText,
+                      {
+                        color: theme.primary,
+                        fontFamily: getBodyFont(isRTL),
+                        textAlign: isRTL ? "right" : "left",
+                      },
+                    ]}
+                  >
                     {t("Logout")}
                   </Text>
                   <TouchableOpacity
@@ -659,13 +788,16 @@ export default function Settings() {
                     }}
                     style={[
                       styles.DeleteBtn,
-                      { backgroundColor: "red", borderColor: theme.borders },
+                      {
+                        backgroundColor: theme.background,
+                        borderColor: theme.destructive,
+                      },
                     ]}
                   >
                     <Ionicons
                       name="log-out-outline"
-                      size={24}
-                      color={"white"}
+                      size={21}
+                      color={theme.destructive}
                     />
                   </TouchableOpacity>
                 </View>
@@ -741,8 +873,10 @@ export default function Settings() {
                 style={[
                   styles.sectionTitle,
                   {
-                    color: theme.secondary,
-                    marginRight: 20,
+                    color: theme.primary,
+                    fontFamily: getTitleFont(isRTL),
+                    fontSize: 16,
+                    marginBottom: Spacing.sm,
                     textAlign: isRTL ? "right" : "left",
                   },
                 ]}
@@ -752,20 +886,46 @@ export default function Settings() {
               <View
                 style={[
                   styles.optionsContainer2,
-                  { borderColor: theme.borders, backgroundColor: theme.card },
+                  {
+                    borderColor: theme.bordersLight,
+                    backgroundColor: theme.surface,
+                  },
                 ]}
               >
                 <Pressable
                   onPress={() => router.push("/about")}
                   style={[
                     styles.options,
-                    { flexDirection: isRTL ? "row-reverse" : "row" },
+                    { flexDirection: isRTL ? "row-reverse" : "row", borderRadius: Radius.xxl},
                   ]}
                 >
-                  <Text style={[styles.optionText, { color: theme.primary }]}>
+                  <Text
+                    style={[
+                      styles.optionText,
+                      {
+                        color: theme.primary,
+                        fontFamily: getBodyFont(isRTL),
+                        textAlign: isRTL ? "right" : "left",
+                      },
+                    ]}
+                  >
                     {t("aboutApp")}
                   </Text>
-                  <Feather name="info" size={24} color={mainColor} />
+                  <View
+                    style={[
+                      styles.iconButton,
+                      {
+                        backgroundColor: theme.background,
+                        borderColor: theme.borders,
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name="information-circle-outline"
+                      size={21}
+                      color={mainColor}
+                    />
+                  </View>
                 </Pressable>
               </View>
             </View>
@@ -785,6 +945,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 5,
     marginTop: 3,
+    paddingHorizontal: 6,
     maxWidth: "100%",
   },
   profileSessionStatusText: {
@@ -814,38 +975,44 @@ const styles = StyleSheet.create({
     top: 20,
   },
   Line: {
-    height: 2,
-    marginBottom: 10,
+    height: 1,
   },
   profileImage: {
     flexDirection: "row",
-    marginBottom: 30,
+    alignItems: "center",
+    justifyContent: "flex-start",
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
+    marginBottom: Spacing.xl,
   },
   Image: {
     width: 70,
     height: 70,
+    flexShrink: 0,
     backgroundColor: "#fff",
-    marginBottom: 20,
-    borderRadius: 50,
-    marginTop: 30,
-    marginHorizontal: 20,
+    borderRadius: Radius.round,
     borderWidth: 2,
   },
   profileInfo: {
     flexDirection: "column",
     justifyContent: "center",
-    marginTop: 10,
+    flex: 1,
+    minWidth: 0,
+    flexShrink: 1,
+    marginLeft: 10,
+    marginTop: 0,
+    gap: Spacing.xs,
   },
   appearanceSection: {
-    marginBottom: 30,
+    marginBottom: Spacing.xl,
     paddingHorizontal: 20,
   },
   dataManagementSection: {
-    marginBottom: 30,
+    marginBottom: Spacing.xl,
     paddingHorizontal: 20,
   },
   AboutAppSection: {
-    marginBottom: 30,
+    marginBottom: Spacing.xl,
     paddingHorizontal: 20,
   },
   deleteAllButton: {
@@ -853,43 +1020,43 @@ const styles = StyleSheet.create({
     right: 20,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    marginBottom: 15,
-    color: "#999",
+    fontSize: 16,
+    marginBottom: Spacing.sm,
     textAlign: "right",
   },
   optionsContainer: {
-    paddingHorizontal: 10,
-    borderRadius: 30,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.xxl,
     borderWidth: 1,
   },
   optionsContainer2: {
-    paddingHorizontal: 10,
-    borderRadius: 30,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.xxl,
     borderWidth: 1,
   },
   options: {
-    // 1. تحديد الحجم والتموضع
-    width: "92%", // يطابق نفس عرض الكرت اللي فوقه بالتمام
-    alignSelf: "center",
-
-    // 2. المسافات الداخلية الفخمة (الـ Padding)
-    paddingVertical: 16, // تعطي ارتفاع مريح للزر عند الضغط
-
-    // 3. الخلفية والحواف (سر التناسق بصرياً مع مقادير)
-    borderRadius: 16, // حواف دائرية ناعمة متطابقة مع الكرت العلوي
-
-    // 4. ترتيب محاذاة العناصر داخل الزر
+    width: "100%",
+    minHeight: 52,
+    paddingVertical: Spacing.sm,
     alignItems: "center",
     justifyContent: "space-between",
-
-    // 5. ظل خفيف لإعطاء لمسة فخامة
+    gap: Spacing.md,
   },
   optionText: {
-    fontSize: 16,
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 22,
     fontWeight: "600",
-    // إذا كان لديك fontFamily مخصص للخط العربي أضفه هنا
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.round,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   colorsRow: {
     flexDirection: "row",
@@ -908,7 +1075,7 @@ const styles = StyleSheet.create({
   },
   Lang: {
     padding: 10,
-    borderRadius: 15,
+    borderRadius: 20,
     borderWidth: 2,
   },
   switch: {
@@ -924,22 +1091,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   ResetBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.round,
+    borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 5,
-    marginTop: 5,
-    borderRadius: 5,
-    borderWidth: 1,
-    marginHorizontal: 10,
   },
   DeleteBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.round,
+    borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 5,
-    marginTop: 5,
-    borderRadius: 5,
-    borderWidth: 1,
-    marginHorizontal: 10,
   },
   modalContainer: {
     justifyContent: "center",

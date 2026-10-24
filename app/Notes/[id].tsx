@@ -33,15 +33,24 @@ const Details = () => {
   const { isDarkMode, mainColor } = useThemeStore();
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
-  const { id } = useLocalSearchParams();
+  const { id, from } = useLocalSearchParams<{
+    id: string | string[];
+    from?: string | string[];
+  }>();
   const noteId = Array.isArray(id) ? id[0] : id;
+  const cameFrom = Array.isArray(from) ? from[0] : from;
   const notes = useNotesStore((state) => state.notes);
   const [showModal, setShowModal] = useState(false);
 
   const delNote = useNotesStore((state) => state.deleteNote);
+  const deletepermanentlyNote = useNotesStore(
+    (state) => state.deletepermanentlyNote,
+  );
+  const restoreNote = useNotesStore((state) => state.restoreNote);
+  const toggleFavorite = useNotesStore((state) => state.toggleFavorite);
   const updateNote = useNotesStore((state) => state.updateNote);
 
-  const note = notes.find((n) => n.id === id);
+  const note = notes.find((n) => n.id === noteId);
 
   const [title, setTitle] = useState(note?.title || "");
   const [content, setContent] = useState(note?.content || "");
@@ -67,7 +76,7 @@ const Details = () => {
         content: contentRef.current,
       });
     };
-  }, []);
+  }, [noteId, updateNote]);
 
   const shareNote = async () => {
     await Share.share({
@@ -76,9 +85,33 @@ const Details = () => {
     });
   };
 
+  const returnToSource = () => {
+    if (cameFrom === "favorites") {
+      router.replace("/(tabs)/favorites");
+    } else if (cameFrom === "trash") {
+      router.replace("/(tabs)/TrashPin");
+    } else {
+      router.back();
+    }
+  };
+
   const deleteNote = () => {
-    delNote(noteId);
-    router.back();
+    if (cameFrom === "trash") {
+      deletepermanentlyNote(noteId);
+    } else {
+      delNote(noteId);
+    }
+    returnToSource();
+  };
+
+  const removeFromFavorites = () => {
+    toggleFavorite(noteId);
+    returnToSource();
+  };
+
+  const restoreDeletedNote = () => {
+    restoreNote(noteId);
+    returnToSource();
   };
 
   return (
@@ -92,20 +125,41 @@ const Details = () => {
       >
         <View style={[styles.header, { backgroundColor: theme.background }]}>
           <View style={styles.headerLeft}>
-            <TouchableOpacity
-              style={[styles.delete, { backgroundColor: theme.card }]}
-              onPress={() => setShowModal(true)}
-            >
-              <Ionicons name="trash" size={22} color="#DAA7A4" />
-            </TouchableOpacity>
+            {cameFrom === "favorites" ? (
+              <TouchableOpacity
+                style={[styles.delete, { backgroundColor: theme.card }]}
+                onPress={removeFromFavorites}
+              >
+                <Ionicons
+                  name="heart-dislike"
+                  size={22}
+                  color={theme.destructive}
+                />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.delete, { backgroundColor: theme.card }]}
+                onPress={() => setShowModal(true)}
+              >
+                <Ionicons name="trash" size={22} color={theme.destructive} />
+              </TouchableOpacity>
+            )}
+            {cameFrom === "trash" && (
+              <TouchableOpacity
+                style={[styles.delete, { backgroundColor: theme.card }]}
+                onPress={restoreDeletedNote}
+              >
+                <Ionicons name="refresh" size={22} color="#00B4D8" />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               style={[styles.share, { backgroundColor: theme.card }]}
               onPress={shareNote}
             >
-              <Ionicons name="share-social" size={22} color={mainColor} />
+              <Ionicons name="share-outline" size={22} color={mainColor} />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={() => router.back()} style={styles.back}>
+          <TouchableOpacity onPress={returnToSource} style={styles.back}>
             <Ionicons name="arrow-forward" size={28} color={mainColor} />
           </TouchableOpacity>
         </View>

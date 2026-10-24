@@ -6,10 +6,12 @@ import {
   TextInput,
   FlatList,
   Pressable,
+  Animated,
+  Easing,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import i18n from "../../i18n/i18n";
 import dayjs from "dayjs";
@@ -50,6 +52,35 @@ export default function Index() {
 
   const allNotes = useNotesStore((state) => state.notes);
   const notes = allNotes.filter((note) => !note.deleted);
+  const cardAnimations = useRef(new Map<string, Animated.Value>());
+  const animatedNoteIds = useRef(new Set<string>());
+
+  notes.forEach((note) => {
+    if (!cardAnimations.current.has(note.id)) {
+      cardAnimations.current.set(note.id, new Animated.Value(0));
+    }
+  });
+
+  useEffect(() => {
+    notes.forEach((note, index) => {
+      if (animatedNoteIds.current.has(note.id)) return;
+
+      animatedNoteIds.current.add(note.id);
+      const animation = cardAnimations.current.get(note.id);
+      if (!animation) return;
+
+      Animated.parallel([
+        Animated.timing(animation, {
+          toValue: 1,
+          duration: 300,
+          delay: index * 50,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  }, [notes]);
+
   const [search, setSearch] = useState<string>("");
   // حالة الملاحظات المفضلة لتحديث الأيقونة
 
@@ -88,9 +119,15 @@ export default function Index() {
         <View style={styles.header}>
           <Pressable
             onPress={() => setShowDeleteModal(true)}
-            style={[styles.headerActionButton, { backgroundColor: theme.card }]}
+            style={[
+              styles.headerActionButton,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.borders,
+              },
+            ]}
           >
-            <Ionicons name="trash" size={22} color={"#DAA7A3"} />
+            <Ionicons name="trash" size={22} color={theme.destructive} />
           </Pressable>
           <Text style={[styles.headerTitle, { color: theme.primary }]}>
             {t("myNotes")}{" "}
@@ -153,52 +190,68 @@ export default function Index() {
             numColumns={2}
             renderItem={({ item }) => (
               <View style={styles.noteContainer}>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  style={[
-                    styles.note,
-                    {
-                      backgroundColor: theme.card,
-                      elevation: 5,
-                      borderColor: mainColor,
-                    },
-                  ]}
-                  onPress={() => router.push(`/Notes/${item.id}`)}
-                  onLongPress={() =>
-                    handleCopy(`${item.title}\n${item.content}`)
-                  }
+                <Animated.View
+                  style={{
+                    opacity: cardAnimations.current.get(item.id)!,
+                    transform: [
+                      {
+                        translateY: cardAnimations.current
+                          .get(item.id)!
+                          .interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [20, 0],
+                          }),
+                      },
+                    ],
+                  }}
                 >
                   <TouchableOpacity
-                    onPress={() => handleFavorite(item.id)}
-                    style={{
-                      position: "absolute",
-                      bottom: 10,
-                      left: 10,
-                      zIndex: 1,
-                    }}
+                    activeOpacity={0.7}
+                    style={[
+                      styles.note,
+                      {
+                        backgroundColor: theme.card,
+                        elevation: 5,
+                        borderColor: mainColor,
+                      },
+                    ]}
+                    onPress={() => router.push(`/Notes/${item.id}`)}
+                    onLongPress={() =>
+                      handleCopy(`${item.title}\n${item.content}`)
+                    }
                   >
-                    <Ionicons
-                      name={item.favorite ? "heart" : "heart-outline"}
-                      size={24}
-                      color={mainColor}
-                    />
+                    <TouchableOpacity
+                      onPress={() => handleFavorite(item.id)}
+                      style={{
+                        position: "absolute",
+                        bottom: 10,
+                        left: 10,
+                        zIndex: 1,
+                      }}
+                    >
+                      <Ionicons
+                        name={item.favorite ? "heart" : "heart-outline"}
+                        size={24}
+                        color={mainColor}
+                      />
+                    </TouchableOpacity>
+                    <Text
+                      style={[styles.noteTitle, { color: theme.primary }]}
+                      numberOfLines={1}
+                    >
+                      {item.title}
+                    </Text>
+                    <Text
+                      style={[styles.noteContent, { color: theme.secondary }]}
+                      numberOfLines={1}
+                    >
+                      {item.content}
+                    </Text>
+                    <Text style={[styles.noteDate, { color: theme.secondary }]}>
+                      {dayjs(item.createdAt).fromNow()}
+                    </Text>
                   </TouchableOpacity>
-                  <Text
-                    style={[styles.noteTitle, { color: theme.primary }]}
-                    numberOfLines={1}
-                  >
-                    {item.title}
-                  </Text>
-                  <Text
-                    style={[styles.noteContent, { color: theme.secondary }]}
-                    numberOfLines={1}
-                  >
-                    {item.content}
-                  </Text>
-                  <Text style={[styles.noteDate, { color: theme.secondary }]}>
-                    {dayjs(item.createdAt).fromNow()}
-                  </Text>
-                </TouchableOpacity>
+                </Animated.View>
               </View>
             )}
             ListEmptyComponent={() => (
@@ -267,7 +320,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 22,
+    paddingTop: 22,
+    paddingBottom: 10,
     position: "relative",
   },
   headerTitle: {
@@ -277,7 +331,8 @@ const styles = StyleSheet.create({
   headerActionButton: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: Radius.round,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },

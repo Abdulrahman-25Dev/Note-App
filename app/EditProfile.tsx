@@ -151,6 +151,10 @@ const EditProfile = () => {
     }
   };
 
+  const returnToSettings = () => {
+    router.replace("/(tabs)/settings");
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -184,7 +188,7 @@ const EditProfile = () => {
 
       showAlert({ title: t("success"), message: t("profileUpdated") });
 
-      router.back();
+      returnToSettings();
 
       (async () => {
         try {
@@ -240,7 +244,7 @@ const EditProfile = () => {
       <View style={styles.content}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={returnToSettings}
           activeOpacity={0.7}
         >
           <Ionicons name="arrow-forward" size={28} color={mainColor} />
