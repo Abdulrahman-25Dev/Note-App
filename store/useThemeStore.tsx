@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Appearance } from "react-native";
 import i18n from "../i18n/i18n";
+export type ThemeMode = "light" | "dark" | "system";
 // 1. تعريف أنواع الألوان المتاحة
 export type ColorKey =
   | "teal"
@@ -24,8 +26,10 @@ interface ThemeState {
   mainColor: string; // يحفظ كود الـ Hex للون المختار
   colorKey: ColorKey; // يحفظ اسم اللون (لتمهيد الاختيار في الإعدادات)
   isDarkMode: boolean;
+  themeMode: ThemeMode;
   setMainColor: (key: Exclude<ColorKey, "custom">) => void;
   setCustomColor: (hex: string) => void;
+  setThemeMode: (mode: ThemeMode) => void;
   toggleDarkMode: () => void;
   Language: "ar" | "en";
   setLanguage: (lang: "ar" | "en") => void;
@@ -39,6 +43,7 @@ export const useThemeStore = create<ThemeState>()(
       mainColor: themeColors.rose,
       colorKey: "teal",
       isDarkMode: true,
+      themeMode: "dark",
       Language: "ar",
       // تغيير اللغة
       setLanguage: (lang) =>
@@ -59,12 +64,35 @@ export const useThemeStore = create<ThemeState>()(
           mainColor: hex,
         }),
 
+      setThemeMode: (mode) =>
+        set({
+          themeMode: mode,
+          isDarkMode:
+            mode === "system"
+              ? Appearance.getColorScheme() === "dark"
+              : mode === "dark",
+        }),
+
       // تبديل الوضع الليلي
-      toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
+      toggleDarkMode: () =>
+        set((state) => ({
+          isDarkMode: !state.isDarkMode,
+          themeMode: state.isDarkMode ? "light" : "dark",
+        })),
     }),
     {
       name: "app-theme-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<ThemeState>;
+        return {
+          ...currentState,
+          ...persisted,
+          themeMode:
+            persisted.themeMode ??
+            (persisted.isDarkMode === false ? "light" : "dark"),
+        };
+      },
       onRehydrateStorage: () => (state) => {
         if (state?.Language) {
           i18n.changeLanguage(state.Language);
@@ -73,3 +101,9 @@ export const useThemeStore = create<ThemeState>()(
     },
   ),
 );
+
+Appearance.addChangeListener(({ colorScheme }) => {
+  if (useThemeStore.getState().themeMode === "system") {
+    useThemeStore.setState({ isDarkMode: colorScheme === "dark" });
+  }
+});

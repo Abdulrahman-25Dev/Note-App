@@ -27,7 +27,7 @@ export const getBodyFont = (isRTL: boolean) =>
   isRTL ? "IBMPlexSansArabic-Regular" : "Inter-Regular";
 
 export const getTitleFont = (isRTL: boolean) =>
-  isRTL ? "IBMPlexSansArabic-Bold" : "PlayfairDisplay-SemiBold";
+  isRTL ? "IBMPlexSansArabic-Bold" : "Inter-Medium";
 
 export const getDisplayFont = (isRTL: boolean) =>
   isRTL ? "IBMPlexSansArabic-Bold" : "PlayfairDisplay-Bold";

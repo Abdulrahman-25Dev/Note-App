@@ -14,7 +14,6 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import { Switch } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SharedModal from "../../components/sharedModal";
 import { Colors } from "../../Constants/Colors";
@@ -63,7 +62,7 @@ export default function Settings() {
   const sessionStatus = useAuthStore((state) => state.sessionStatus);
   const verifySession = useAuthStore((state) => state.verifySession);
   const { t, i18n } = useTranslation();
-  const { isDarkMode, toggleDarkMode, setMainColor, setCustomColor } =
+  const { isDarkMode, themeMode, setThemeMode, setMainColor, setCustomColor } =
     useThemeStore();
   const mainColor = useThemeStore((state) => state.mainColor);
   const colorKey = useThemeStore((state) => state.colorKey);
@@ -281,6 +280,58 @@ export default function Settings() {
     { id: "yellow", hex: "#F59E0B", name: "أصفر" },
     { id: "rose", hex: "#F43F5E", name: "وردي" },
   ];
+  const currentColorName =
+    colorKey === "custom"
+      ? t("customColor")
+      : t(`color${colorKey.charAt(0).toUpperCase()}${colorKey.slice(1)}`);
+  const renderAppearanceRow = (
+    title: string,
+    value: string,
+    onPress: () => void,
+    isLast = false,
+  ) => (
+    <TouchableOpacity
+      accessibilityRole="button"
+      onPress={onPress}
+      style={[
+        styles.appearanceRow,
+        {
+          flexDirection: isRTL ? "row-reverse" : "row",
+          borderBottomColor: theme.bordersLight,
+          borderBottomWidth: isLast ? 0 : 1,
+        },
+      ]}
+    >
+      <Text
+        style={[
+          styles.appearanceRowTitle,
+          { color: theme.primary, fontFamily: getBodyFont(isRTL) },
+        ]}
+      >
+        {title}
+      </Text>
+      <View
+        style={[
+          styles.appearanceRowValueContainer,
+          { flexDirection: isRTL ? "row-reverse" : "row" },
+        ]}
+      >
+        <Text
+          style={[
+            styles.appearanceRowValue,
+            { color: theme.tertiary, fontFamily: getBodyFont(isRTL) },
+          ]}
+        >
+          {value}
+        </Text>
+        <Ionicons
+          name={isRTL ? "chevron-back" : "chevron-forward"}
+          size={20}
+          color={theme.tertiary}
+        />
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -416,195 +467,84 @@ export default function Settings() {
                   },
                 ]}
               >
-                <View
-                  style={[
-                    styles.options,
-                    { flexDirection: isRTL ? "row-reverse" : "row" },
-                    {
-                      backgroundColor: theme.surface,
-                      borderColor: theme.bordersLight,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.optionText,
+                {renderAppearanceRow(
+                  t("theme"),
+                  t(
+                    `themeMode${themeMode.charAt(0).toUpperCase()}${themeMode.slice(1)}`,
+                  ),
+                  () =>
+                    showAlert({
+                      title: t("theme"),
+                      message: "",
+                      buttons: [
+                        {
+                          text: t("themeModeLight"),
+                          onPress: () => setThemeMode("light"),
+                        },
+                        {
+                          text: t("themeModeDark"),
+                          onPress: () => setThemeMode("dark"),
+                        },
+                        {
+                          text: t("themeModeSystem"),
+                          onPress: () => setThemeMode("system"),
+                        },
+                      ],
+                    }),
+                )}
+                {renderAppearanceRow(t("appColor"), currentColorName, () =>
+                  showAlert({
+                    title: t("appColor"),
+                    message: "",
+                    buttons: [
+                      ...colorsOptions.map((color) => ({
+                        text: t(
+                          `color${color.id.charAt(0).toUpperCase()}${color.id.slice(1)}`,
+                        ),
+                        onPress: () => setMainColor(color.id as any),
+                      })),
                       {
-                        color: theme.primary,
-                        fontFamily: getBodyFont(isRTL),
-                        textAlign: isRTL ? "right" : "left",
+                        text: t("customColor"),
+                        onPress: () => {
+                          const currentColor = normalizePickerColor(mainColor);
+                          selectedColorRef.current = currentColor;
+                          setSelectedColor(currentColor);
+                          setColorPickerVisible(true);
+                        },
                       },
-                    ]}
-                  >
-                    {t("theme")}
-                  </Text>
-                  <Switch
-                    style={styles.switch}
-                    trackColor={{ false: "#767577", true: mainColor }}
-                    thumbColor={isDarkMode ? theme.primary : "#f4f3f4"}
-                    value={isDarkMode}
-                    onValueChange={toggleDarkMode}
-                  />
-                </View>
-                <View
-                  style={[styles.Line, { backgroundColor: theme.bordersLight }]}
-                />
-                <View
-                  style={[
-                    styles.options,
-                    { flexDirection: isRTL ? "row-reverse" : "row" },
-                    {
-                      backgroundColor: theme.surface,
-                      borderColor: theme.bordersLight,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      {
-                        color: theme.primary,
-                        fontFamily: getBodyFont(isRTL),
-                        textAlign: isRTL ? "right" : "left",
-                      },
-                    ]}
-                  >
-                    {t("appColor")}
-                  </Text>
-                  <View
-                    style={[
-                      styles.colorsRow,
-                      { flexDirection: isRTL ? "row" : "row-reverse" },
-                    ]}
-                  >
-                    {colorsOptions.map((color) => {
-                      const isSelected = mainColor === color.hex;
-                      return (
-                        <TouchableOpacity
-                          key={color.id}
-                          style={[
-                            styles.colorCircle,
-                            { backgroundColor: color.hex },
-                          ]}
-                          onPress={() => setMainColor(color.id as any)}
-                        >
-                          {isSelected && (
-                            <Ionicons
-                              name="checkmark"
-                              size={18}
-                              color={theme.primary}
-                            />
-                          )}
-                        </TouchableOpacity>
-                      );
-                    })}
-                    <TouchableOpacity
-                      style={[
-                        styles.colorCircle,
-                        styles.customCircle,
-                        colorKey === "custom"
-                          ? {
-                              backgroundColor: mainColor,
-                              borderColor: mainColor,
-                            }
-                          : {
-                              backgroundColor: "transparent",
-                              borderColor: mainColor,
-                            },
-                      ]}
-                      onPress={() => {
-                        const currentColor = normalizePickerColor(mainColor);
-                        selectedColorRef.current = currentColor;
-                        setSelectedColor(currentColor);
-                        setColorPickerVisible(true);
-                      }}
-                    >
-                      <Ionicons
-                        name={colorKey === "custom" ? "checkmark" : "add"}
-                        size={18}
-                        color={theme.primary}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                <View
-                  style={[styles.Line, { backgroundColor: theme.bordersLight }]}
-                />
-                <View
-                  style={[
-                    styles.options,
-                    { flexDirection: isRTL ? "row-reverse" : "row" },
-                    {
-                      backgroundColor: theme.surface,
-                      borderColor: theme.bordersLight,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      {
-                        color: theme.primary,
-                        fontFamily: getBodyFont(isRTL),
-                        textAlign: isRTL ? "right" : "left",
-                      },
-                    ]}
-                  >
-                    {t("language")}
-                  </Text>
-                  <View style={styles.languageRow}>
-                    <TouchableOpacity
-                      style={[
-                        styles.Lang,
-                        i18n.language === "ar"
-                          ? { borderColor: mainColor }
-                          : { borderColor: theme.borders },
-                      ]}
-                      onPress={() => {
-                        useThemeStore.getState().setLanguage("ar");
-                        i18n.changeLanguage("ar");
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.optionText,
-                          {
-                            color: theme.primary,
-                            fontFamily: getBodyFont(isRTL),
-                            fontWeight: "bold",
+                    ],
+                  }),
+                )}
+                {renderAppearanceRow(
+                  t("language"),
+                  t(
+                    i18n.language === "ar"
+                      ? "languageArabic"
+                      : "languageEnglish",
+                  ),
+                  () =>
+                    showAlert({
+                      title: t("language"),
+                      message: "",
+                      buttons: [
+                        {
+                          text: t("languageArabic"),
+                          onPress: () => {
+                            useThemeStore.getState().setLanguage("ar");
+                            i18n.changeLanguage("ar");
                           },
-                        ]}
-                      >
-                        ع
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.Lang,
-                        i18n.language === "en"
-                          ? { borderColor: mainColor }
-                          : { borderColor: theme.borders },
-                      ]}
-                      onPress={() => {
-                        useThemeStore.getState().setLanguage("en");
-                        i18n.changeLanguage("en");
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.optionText,
-                          {
-                            color: theme.primary,
-                            fontFamily: getBodyFont(isRTL),
-                            fontWeight: "bold",
+                        },
+                        {
+                          text: t("languageEnglish"),
+                          onPress: () => {
+                            useThemeStore.getState().setLanguage("en");
+                            i18n.changeLanguage("en");
                           },
-                        ]}
-                      >
-                        En
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                        },
+                      ],
+                    }),
+                  true,
+                )}
               </View>
             </View>
             <View style={styles.dataManagementSection}>
@@ -1143,6 +1083,22 @@ const styles = StyleSheet.create({
   languageRow: {
     flexDirection: "row",
     gap: 20,
+  },
+  appearanceRow: {
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+  },
+  appearanceRowTitle: {
+    fontSize: 16,
+  },
+  appearanceRowValueContainer: {
+    alignItems: "center",
+    gap: Spacing.xs,
+  },
+  appearanceRowValue: {
+    fontSize: 14,
   },
   Lang: {
     padding: 10,

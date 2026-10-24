@@ -122,7 +122,7 @@ const ChangePassword = () => {
         buttons: [
           {
             text: t("ok"),
-            onPress: () => router.back(),
+            onPress: () => router.navigate("/(tabs)/settings"),
           },
         ],
       });
@@ -143,11 +143,21 @@ const ChangePassword = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => router.back()}
+        style={[
+          styles.backButton,
+          {
+            backgroundColor: theme.card,
+            [isRTL ? "right" : "left"]: 16,
+          },
+        ]}
+        onPress={() => router.navigate("/(tabs)/settings")}
         activeOpacity={0.7}
       >
-        <Ionicons name="arrow-forward" size={28} color={mainColor} />
+        <Ionicons
+          name={isRTL ? "arrow-forward" : "arrow-back"}
+          size={24}
+          color={mainColor}
+        />
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -350,13 +360,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backButton: {
-  position: 'absolute',
-  top: Platform.OS === 'ios' ? 50 : 30, // 👈 مراعاة مسافة الـ Status Bar
-  right: 16, // 👈 جهة اليمين لتناسب اللغة العربية
-  zIndex: 10, // 👈 يضمن أن الزر فوق كل الطبقات وقابل للضغط
-  padding: 8,
-  borderRadius: 12,
-},
+    position: "absolute",
+    top: Platform.OS === "ios" ? 50 : 30,
+    zIndex: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   // Step Indicator
   stepIndicatorContainer: {
     flexDirection: "row",
