@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ActivityIndicator,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -30,6 +31,13 @@ import {
 import { useAlertStore } from "../store/useAlertStore";
 import { useAuthStore } from "../store/useAuthStore";
 import i18n from "@/i18n/i18n";
+import { Colors } from "../Constants/Colors";
+import {
+  getBodyFont,
+  getTitleFont,
+  Radius,
+  Spacing,
+} from "../Constants/Layout";
 
 const EditProfile = () => {
   const [username, setUsername] = useState("");
@@ -39,7 +47,8 @@ const EditProfile = () => {
   const showAlert = useAlertStore((s) => s.showAlert);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const { mainColor } = useThemeStore();
+  const { mainColor, isDarkMode } = useThemeStore();
+  const theme = isDarkMode ? Colors.dark : Colors.light;
   const authProfile = useAuthStore((state) => state.profile);
   const session = useAuthStore((state) => state.session);
   const verifySession = useAuthStore((state) => state.verifySession);
@@ -213,7 +222,7 @@ const EditProfile = () => {
               },
             });
           }
-        } catch (asyncErr) {
+        } catch {
           console.log("Offline mode: background sync deferred");
         }
       })();
@@ -226,6 +235,23 @@ const EditProfile = () => {
   };
 
   const isRTL = i18n.language === "ar"; // التحقق من اتجاه اللغة
+
+  const getContrastingColor = (hexColor: string) => {
+    const hex = hexColor.replace("#", "");
+    const fullHex =
+      hex.length === 3
+        ? hex
+            .split("")
+            .map((character) => character + character)
+            .join("")
+        : hex;
+    const value = parseInt(fullHex, 16);
+    const red = (value >> 16) & 255;
+    const green = (value >> 8) & 255;
+    const blue = value & 255;
+    const brightness = (red * 299 + green * 587 + blue * 114) / 1000;
+    return brightness > 128 ? "#000000" : "#FFFFFF";
+  };
 
   if (loading)
     return <ActivityIndicator size="large" color="#fff" style={{ flex: 1 }} />;
@@ -240,10 +266,19 @@ const EditProfile = () => {
     : require("../assets/images/user.png");
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
+      <ScrollView contentContainerStyle={styles.content}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[
+            styles.backButton,
+            {
+              alignSelf: isRTL ? "flex-end" : "flex-start",
+              backgroundColor: theme.card,
+              borderColor: theme.borders,
+            },
+          ]}
           onPress={returnToSettings}
           activeOpacity={0.7}
         >
@@ -251,7 +286,7 @@ const EditProfile = () => {
         </TouchableOpacity>
         {/* جزء الصورة */}
         <TouchableOpacity
-          style={[styles.avatarContainer]}
+          style={styles.avatarContainer}
           onPress={handlePickImage}
         >
           <Image
@@ -283,16 +318,44 @@ const EditProfile = () => {
         </TouchableOpacity>
 
         {/* جزء الاسم */}
-        <Text style={[styles.label, isRTL && { textAlign: "right" }]}>
+        <Text
+          style={[
+            styles.label,
+            {
+              color: theme.primary,
+              fontFamily: getTitleFont(isRTL),
+              textAlign: isRTL ? "right" : "left",
+            },
+          ]}
+        >
           {t("username")}
         </Text>
-        <TextInput
-          style={styles.input}
-          value={username}
-          onChangeText={setUsername}
-          placeholder={t("enterYourName")}
-          placeholderTextColor="#666"
-        />
+        <View
+          style={[
+            styles.inputContainer,
+            {
+              flexDirection: isRTL ? "row-reverse" : "row",
+              backgroundColor: theme.surface,
+              borderColor: theme.borders,
+            },
+          ]}
+        >
+          <Ionicons name="person-outline" size={20} color={theme.secondary} />
+          <TextInput
+            style={[
+              styles.input,
+              {
+                color: theme.primary,
+                fontFamily: getBodyFont(isRTL),
+                textAlign: isRTL ? "right" : "left",
+              },
+            ]}
+            value={username}
+            onChangeText={setUsername}
+            placeholder={t("enterYourName")}
+            placeholderTextColor={theme.secondary}
+          />
+        </View>
 
         {/* زر الحفظ */}
         <TouchableOpacity
@@ -301,59 +364,74 @@ const EditProfile = () => {
           disabled={saving}
         >
           {saving ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={getContrastingColor(mainColor)} />
           ) : (
-            <Text style={styles.saveButtonText}>{t("saveChanges")}</Text>
+            <Text
+              style={[
+                styles.saveButtonText,
+                {
+                  color: getContrastingColor(mainColor),
+                  fontFamily: getTitleFont(isRTL),
+                },
+              ]}
+            >
+              {t("saveChanges")}
+            </Text>
           )}
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#121212" },
-  content: { padding: 20 },
-  avatarContainer: { alignItems: "center", marginVertical: 30 },
+  container: { flex: 1 },
+  content: { padding: Spacing.lg, paddingBottom: Spacing.xxxl },
+  avatarContainer: { alignItems: "center", marginVertical: Spacing.xl },
   avatar: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#333",
     borderWidth: 2,
   },
   changePhotoText: {
     color: "#007AFF",
-    marginTop: 10,
+    marginTop: Spacing.sm,
     fontSize: 14,
     fontWeight: "600",
   },
-  label: { color: "#fff", fontSize: 16, marginBottom: 10, fontWeight: "600" },
-  input: {
-    backgroundColor: "#1e1e1e",
-    color: "#fff",
-    padding: 16,
-    borderRadius: 12,
+  label: {
     fontSize: 16,
+    marginBottom: Spacing.sm,
+  },
+  inputContainer: {
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: "#333",
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.lg,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    fontSize: 16,
   },
   saveButton: {
-    backgroundColor: "#007AFF",
-    padding: 18,
-    borderRadius: 12,
+    height: 52,
+    borderRadius: Radius.lg,
     alignItems: "center",
-    marginTop: 40,
+    justifyContent: "center",
+    marginTop: Spacing.xxl,
   },
   backButton: {
-    position: "absolute",
-    top: Platform.OS === "ios" ? 50 : 30, // 👈 مراعاة مسافة الـ Status Bar
-    right: 16, // 👈 جهة اليمين لتناسب اللغة العربية
-    zIndex: 10, // 👈 يضمن أن الزر فوق كل الطبقات وقابل للضغط
-    padding: 8,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  saveButtonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  saveButtonText: { fontSize: 16 },
 });
 
 export default EditProfile;

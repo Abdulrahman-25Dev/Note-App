@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import NetInfo from "@react-native-community/netinfo";
 import { useFocusEffect } from "@react-navigation/native";
 import { Image } from "expo-image";
@@ -12,6 +12,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { Switch } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -42,7 +43,21 @@ import ColorPicker, {
   Preview,
 } from "reanimated-color-picker";
 
+const FALLBACK_PICKER_COLOR = "#00B4D8";
+
+const normalizePickerColor = (color: unknown): string => {
+  if (typeof color !== "string") return FALLBACK_PICKER_COLOR;
+  const trimmedColor = color.trim();
+  const hexColor = trimmedColor.startsWith("#")
+    ? trimmedColor
+    : `#${trimmedColor}`;
+  return /^#(?:[\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i.test(hexColor)
+    ? hexColor
+    : FALLBACK_PICKER_COLOR;
+};
+
 export default function Settings() {
+  const { width: windowWidth } = useWindowDimensions();
   const session = useAuthStore((state) => state.session);
   const profile = useAuthStore((state) => state.profile);
   const sessionStatus = useAuthStore((state) => state.sessionStatus);
@@ -56,7 +71,10 @@ export default function Settings() {
   const isRTL = i18n.language === "ar";
 
   const [colorPickerVisible, setColorPickerVisible] = useState(false);
-  const [selectedColor, setSelectedColor] = useState(mainColor);
+  const [selectedColor, setSelectedColor] = useState(() =>
+    normalizePickerColor(mainColor),
+  );
+  const selectedColorRef = useRef(normalizePickerColor(mainColor));
   const [cachedAvatarUri, setCachedAvatarUri] = useState<string | null>(null);
   const [failedAvatarUri, setFailedAvatarUri] = useState<string | null>(null);
   const [hasPreviousLogin, setHasPreviousLogin] = useState(false);
@@ -495,7 +513,9 @@ export default function Settings() {
                             },
                       ]}
                       onPress={() => {
-                        setSelectedColor(mainColor);
+                        const currentColor = normalizePickerColor(mainColor);
+                        selectedColorRef.current = currentColor;
+                        setSelectedColor(currentColor);
                         setColorPickerVisible(true);
                       }}
                     >
@@ -812,6 +832,9 @@ export default function Settings() {
               <View
                 style={[
                   styles.colorPickerModal,
+                  {
+                    width: Math.min(windowWidth - Spacing.xl * 2, 440),
+                  },
                   { backgroundColor: theme.card },
                 ]}
               >
@@ -820,10 +843,20 @@ export default function Settings() {
                   {t("chooseColor")}{" "}
                 </Text>
                 <ColorPicker
-                  value={selectedColor}
+                  value={normalizePickerColor(selectedColor)}
+                  sliderThickness={28}
                   onChangeJS={(colors: any) => {
                     if (typeof colors?.hex === "string") {
-                      setSelectedColor(colors.hex);
+                      selectedColorRef.current = normalizePickerColor(
+                        colors.hex,
+                      );
+                    }
+                  }}
+                  onCompleteJS={(colors: any) => {
+                    if (typeof colors?.hex === "string") {
+                      const finalColor = normalizePickerColor(colors.hex);
+                      selectedColorRef.current = finalColor;
+                      setSelectedColor(finalColor);
                     }
                   }}
                   style={styles.colorPicker}
@@ -840,7 +873,9 @@ export default function Settings() {
                   <TouchableOpacity
                     style={[styles.LogoutBtn, { backgroundColor: mainColor }]}
                     onPress={() => {
-                      setCustomColor(selectedColor);
+                      setCustomColor(
+                        normalizePickerColor(selectedColorRef.current),
+                      );
                       setColorPickerVisible(false);
                     }}
                   >
@@ -881,7 +916,7 @@ export default function Settings() {
                   },
                 ]}
               >
-                {t("aboutApp")}
+                {t("appInfoSupport")}
               </Text>
               <View
                 style={[
@@ -896,7 +931,10 @@ export default function Settings() {
                   onPress={() => router.push("/about")}
                   style={[
                     styles.options,
-                    { flexDirection: isRTL ? "row-reverse" : "row", borderRadius: Radius.xxl},
+                    {
+                      flexDirection: isRTL ? "row-reverse" : "row",
+                      borderRadius: Radius.xxl,
+                    },
                   ]}
                 >
                   <Text
@@ -927,6 +965,39 @@ export default function Settings() {
                     />
                   </View>
                 </Pressable>
+                <View
+                  style={[styles.Line, { backgroundColor: theme.bordersLight }]}
+                />
+                <View
+                  style={[
+                    styles.options,
+                    { flexDirection: isRTL ? "row-reverse" : "row" },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      {
+                        color: theme.primary,
+                        fontFamily: getBodyFont(isRTL),
+                        textAlign: isRTL ? "right" : "left",
+                      },
+                    ]}
+                  >
+                    {t("buyDeveloperCoffee")}
+                  </Text>
+                  <View
+                    style={[
+                      styles.iconButton,
+                      {
+                        backgroundColor: theme.background,
+                        borderColor: theme.borders,
+                      },
+                    ]}
+                  >
+                    <Feather name="coffee" size={21} color={mainColor} />
+                  </View>
+                </View>
               </View>
             </View>
           </View>
@@ -1193,7 +1264,9 @@ const styles = StyleSheet.create({
   },
   hueSlider: {
     width: "100%",
-    height: 30,
+    height: 28,
+    borderRadius: Radius.round,
+    marginTop: Spacing.sm,
     marginBottom: 12,
   },
   preview: {
