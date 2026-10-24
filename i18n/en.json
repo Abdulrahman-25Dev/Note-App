@@ -75,6 +75,8 @@
   "DELALLTrash": "Delete All Trash",
   "sureDELALLTrash": "Are you sure you want to delete all deleted notes permanently?",
   "Restore": "Restore",
+  "deletePermanently": "Delete Permanently",
+  "noteActions": "Note actions",
   "restoreAllTrash": "Restore All Trash",
   "sureRestoreAllTrash": "Are you sure you want to restore all deleted notes?",
   "noFavorites": "No favorite notes yet. Add some notes to favorites! 💝",

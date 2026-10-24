@@ -6,7 +6,6 @@ import {
   FlatList,
   TextInput,
   Pressable,
-  Modal,
   Animated,
   Easing,
 } from "react-native";
@@ -19,14 +18,20 @@ import { Colors } from "../../Constants/Colors";
 import { useTranslation } from "react-i18next";
 import SharedModal from "../../components/sharedModal";
 import { useNotesStore } from "../../store/useNotesStore";
-import { getBodyFont, Radius, Spacing } from "../../Constants/Layout";
+import {
+  getBodyFont,
+  getTitleFont,
+  Radius,
+  Spacing,
+} from "../../Constants/Layout";
 
 const TrashPin = () => {
   const deletepermanentlyNote = useNotesStore((s) => s.deletepermanentlyNote);
   const restoreNote = useNotesStore((s) => s.restoreNote);
   const deleteAllTrash = useNotesStore((s) => s.deleteAllDeleted);
   const restoreAllDeleted = useNotesStore((s) => s.restoreAllDeleted);
-  const [showModal, setShowModal] = useState(false);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [confirmPermanentDelete, setConfirmPermanentDelete] = useState(false);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [showRestoreAllModal, setShowRestoreAllModal] = useState(false);
   const { t, i18n } = useTranslation();
@@ -80,6 +85,11 @@ const TrashPin = () => {
     restoreAllDeleted();
     setShowRestoreAllModal(false);
     router.push("/(tabs)/TrashPin");
+  };
+
+  const closeNoteActions = () => {
+    setSelectedNoteId(null);
+    setConfirmPermanentDelete(false);
   };
 
   const mainColor = useThemeStore((state) => state.mainColor);
@@ -255,6 +265,118 @@ const TrashPin = () => {
               </View>
             </View>
           </SharedModal>
+          <SharedModal
+            visible={selectedNoteId !== null}
+            onClose={closeNoteActions}
+            onRequestClose={closeNoteActions}
+          >
+            <View
+              style={[
+                styles.noteActionModal,
+                { backgroundColor: theme.surface, borderColor: theme.borders },
+              ]}
+            >
+              {confirmPermanentDelete ? (
+                <>
+                  <Text style={[styles.titleModal, { color: theme.primary }]}>
+                    {t("ofcorse?")}
+                  </Text>
+                  <Text style={[styles.textModal, { color: theme.primary }]}>
+                    {t("ofcorseText?")}
+                  </Text>
+                  <View style={styles.modalButtons}>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalDeleteBtn,
+                        { backgroundColor: "#EF4444" },
+                      ]}
+                      onPress={() => {
+                        if (selectedNoteId)
+                          deletepermanentlyNote(selectedNoteId);
+                        closeNoteActions();
+                      }}
+                    >
+                      <Text style={{ color: "#ffffff", fontWeight: "bold" }}>
+                        {t("deletePermanently")}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalCancelBtn,
+                        {
+                          backgroundColor: "transparent",
+                          borderColor: theme.borders,
+                        },
+                      ]}
+                      onPress={closeNoteActions}
+                    >
+                      <Text
+                        style={{ color: theme.primary, fontWeight: "bold" }}
+                      >
+                        {t("CAN")}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    onPress={() => {
+                      if (selectedNoteId) restoreNote(selectedNoteId);
+                      closeNoteActions();
+                    }}
+                    style={[
+                      styles.noteActionOption,
+                      { flexDirection: isRTL ? "row-reverse" : "row" },
+                    ]}
+                  >
+                    <Ionicons name="refresh" size={21} color={mainColor} />
+                    <Text
+                      style={[
+                        styles.noteActionText,
+                        { color: mainColor, fontFamily: getBodyFont(isRTL) },
+                      ]}
+                    >
+                      {t("Restore")}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    onPress={() => setConfirmPermanentDelete(true)}
+                    style={[
+                      styles.noteActionOption,
+                      { flexDirection: isRTL ? "row-reverse" : "row" },
+                    ]}
+                  >
+                    <Ionicons name="trash" size={21} color="#EF4444" />
+                    <Text
+                      style={[
+                        styles.noteActionText,
+                        { color: "#EF4444", fontFamily: getBodyFont(isRTL) },
+                      ]}
+                    >
+                      {t("deletePermanently")}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.modalCancelBtn,
+                      {
+                        backgroundColor: "transparent",
+                        borderColor: theme.borders,
+                      },
+                    ]}
+                    onPress={closeNoteActions}
+                  >
+                    <Text style={{ color: theme.primary, fontWeight: "bold" }}>
+                      {t("CAN")}
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          </SharedModal>
           <FlatList
             data={filteredNotes}
             keyExtractor={(item) => item.id}
@@ -279,111 +401,74 @@ const TrashPin = () => {
                   <View
                     style={[
                       styles.note,
-                      { backgroundColor: theme.card, borderColor: mainColor },
+                      {
+                        backgroundColor: theme.surface,
+                        borderColor: mainColor,
+                      },
                     ]}
                   >
+                    <View
+                      style={[
+                        styles.noteHeader,
+                        { flexDirection: isRTL ? "row-reverse" : "row" },
+                      ]}
+                    >
+                      <Pressable
+                        style={styles.noteHeaderTitle}
+                        onPress={() =>
+                          router.push(`/Notes/${item.id}?from=trash`)
+                        }
+                      >
+                        <Text
+                          style={[
+                            styles.noteTitle,
+                            {
+                              color: theme.primary,
+                              fontFamily: getTitleFont(isRTL),
+                            },
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {item.title}
+                        </Text>
+                      </Pressable>
+                      <TouchableOpacity
+                        accessibilityRole="button"
+                        accessibilityLabel={t("noteActions")}
+                        onPress={() => {
+                          setSelectedNoteId(item.id);
+                          setConfirmPermanentDelete(false);
+                        }}
+                        style={styles.noteMenuButton}
+                      >
+                        <Ionicons
+                          name="ellipsis-vertical"
+                          size={21}
+                          color={theme.tertiary}
+                        />
+                      </TouchableOpacity>
+                    </View>
                     <Pressable
+                      style={styles.noteTouchable}
                       onPress={() =>
                         router.push(`/Notes/${item.id}?from=trash`)
                       }
                     >
                       <Text
-                        style={[styles.noteTitle, { color: theme.primary }]}
-                        numberOfLines={1}
-                      >
-                        {item.title}
-                      </Text>
-                      <Text
-                        style={[styles.noteContent, { color: theme.secondary }]}
-                        numberOfLines={1}
+                        style={[
+                          styles.noteContent,
+                          {
+                            color: theme.secondary,
+                            fontFamily: getBodyFont(isRTL),
+                          },
+                        ]}
+                        numberOfLines={2}
                       >
                         {item.content}
                       </Text>
                     </Pressable>
-                    <View style={styles.noteActions}>
-                      <TouchableOpacity
-                        style={[
-                          styles.deleteButton,
-                          { backgroundColor: theme.card },
-                        ]}
-                        onPress={() => setShowModal(true)}
-                      >
-                        <Ionicons name="trash" size={22} color="#EE8A8A" />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.restoreButton,
-                          { backgroundColor: theme.card },
-                        ]}
-                        onPress={() => restoreNote(item.id)}
-                      >
-                        <Ionicons name="refresh" size={22} color="#00B4D8" />
-                      </TouchableOpacity>
-                    </View>
                   </View>
                 </Animated.View>
-                <Modal
-                  visible={showModal}
-                  animationType="fade"
-                  transparent
-                  onRequestClose={() => setShowModal(false)}
-                >
-                  <View style={styles.overlay2}>
-                    <View
-                      style={[
-                        styles.MessageContainer,
-                        {
-                          backgroundColor: theme.card,
-                          borderColor: theme.borders,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[styles.MessageTitle, { color: theme.primary }]}
-                      >
-                        {t("ofcorse?")}
-                      </Text>
-                      <Text
-                        style={[styles.MessageText, { color: theme.primary }]}
-                      >
-                        {t("ofcorseText?")}
-                      </Text>
-                      <View style={styles.buttonContainer}>
-                        <TouchableOpacity
-                          style={[
-                            styles.DELBtn,
-                            { backgroundColor: theme.destructive },
-                          ]}
-                          onPress={() => {
-                            deletepermanentlyNote(item.id);
-                            setShowModal(false);
-                          }}
-                        >
-                          <Text style={styles.DELBtnText}>{t("DEL")}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => setShowModal(false)}
-                          style={[
-                            styles.CANBtn,
-                            {
-                              backgroundColor: "transparent",
-                              borderColor: theme.borders,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.CANBtnText,
-                              { color: theme.primary },
-                            ]}
-                          >
-                            {t("CAN")}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </View>
-                </Modal>
               </View>
             )}
             ListEmptyComponent={() => (
@@ -470,46 +555,29 @@ const styles = StyleSheet.create({
     borderColor: "#A7C7FF",
     borderRadius: 15,
     padding: 15,
-    backgroundColor: "#fff",
-    elevation: 2,
     height: 150,
     justifyContent: "space-between",
   },
   noteTouchable: {
     flex: 1,
   },
-  noteActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-  restoreButton: {
-    flexDirection: "row",
+  noteHeader: {
+    minHeight: 32,
     alignItems: "center",
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    gap: 6,
   },
-  restoreText: {
-    fontSize: 12,
-    color: "#fff",
-    marginLeft: 5,
+  noteHeaderTitle: {
+    flex: 1,
   },
-  deleteButton: {
-    flexDirection: "row",
+  noteMenuButton: {
+    width: 28,
+    height: 32,
     alignItems: "center",
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  deleteText: {
-    fontSize: 12,
-    marginLeft: 5,
+    justifyContent: "center",
   },
   noteTitle: {
     fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 15,
     textAlign: "right",
   },
   noteContent: {
@@ -570,58 +638,21 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
   },
-  overlay2: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  noteActionModal: {
     justifyContent: "center",
-    alignItems: "center",
-  },
-  MessageContainer: {
-    justifyContent: "center",
-    alignItems: "center",
     padding: 20,
-    borderRadius: 20,
-    borderWidth: 2,
-  },
-  MessageTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  MessageText: {
-    fontSize: 18,
-    marginBottom: 10,
-    fontWeight: "heavy",
-    textAlign: "center",
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 20,
-    gap: 20,
-  },
-  DELBtn: {
-    backgroundColor: "red",
-    padding: 15,
-    justifyContent: "center",
-    borderRadius: 10,
-  },
-  DELBtnText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  CANBtn: {
-    padding: 15,
-    justifyContent: "center",
-    borderRadius: 10,
     borderWidth: 1,
+    borderRadius: 12,
+    width: "85%",
+    gap: 8,
   },
-  CANBtnText: {
+  noteActionOption: {
+    minHeight: 48,
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 8,
+  },
+  noteActionText: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#fff",
   },
 });

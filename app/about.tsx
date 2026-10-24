@@ -265,31 +265,6 @@ function AboutScreen() {
           ]}
         >
           {/* اضافة الميزة هنا */}
-          <Ionicons name="lock-closed-outline" size={24} color={mainColor} />
-          <Text
-            style={[
-              styles.featureText,
-              {
-                color: theme.secondary,
-                textAlign: isRTL ? "right" : "left",
-                fontFamily: getBodyFont(isRTL),
-              },
-            ]}
-          >
-            {t("feature7Lock")}
-          </Text>
-        </View>
-
-        <View
-          style={[
-            styles.feature,
-            {
-              backgroundColor: theme.card,
-              flexDirection: isRTL ? "row-reverse" : "row",
-            },
-          ]}
-        >
-          {/* اضافة الميزة هنا */}
           <Ionicons name="ellipsis-horizontal" size={24} color={mainColor} />
           <Text
             style={[

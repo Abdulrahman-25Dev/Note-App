@@ -571,7 +571,9 @@ export default function Settings() {
                   },
                 ]}
               >
-                <View
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => handleProtectedNavigation("/EditProfile")}
                   style={[
                     styles.options,
                     { flexDirection: isRTL ? "row-reverse" : "row" },
@@ -589,8 +591,7 @@ export default function Settings() {
                   >
                     {t("editProfile")}
                   </Text>
-                  <TouchableOpacity
-                    onPress={() => handleProtectedNavigation("/EditProfile")}
+                  <View
                     style={[
                       styles.DeleteBtn,
                       {
@@ -604,12 +605,14 @@ export default function Settings() {
                       size={21}
                       color={mainColor}
                     />
-                  </TouchableOpacity>
-                </View>
+                  </View>
+                </TouchableOpacity>
                 <View
                   style={[styles.Line, { backgroundColor: theme.bordersLight }]}
                 />
-                <View
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => handleProtectedNavigation("../ChangePassword")}
                   style={[
                     styles.options,
                     { flexDirection: isRTL ? "row-reverse" : "row" },
@@ -627,10 +630,7 @@ export default function Settings() {
                   >
                     {t("changePassword")}
                   </Text>
-                  <TouchableOpacity
-                    onPress={() =>
-                      handleProtectedNavigation("../ChangePassword")
-                    }
+                  <View
                     style={[
                       styles.DeleteBtn,
                       {
@@ -644,12 +644,14 @@ export default function Settings() {
                       size={21}
                       color={mainColor}
                     />
-                  </TouchableOpacity>
-                </View>
+                  </View>
+                </TouchableOpacity>
                 <View
                   style={[styles.Line, { backgroundColor: theme.bordersLight }]}
                 />
-                <View
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleDeleteAccount}
                   style={[
                     styles.options,
                     { flexDirection: isRTL ? "row-reverse" : "row" },
@@ -667,8 +669,7 @@ export default function Settings() {
                   >
                     {t("deleteAccount")}
                   </Text>
-                  <TouchableOpacity
-                    onPress={handleDeleteAccount}
+                  <View
                     style={[
                       styles.DeleteBtn,
                       {
@@ -682,12 +683,52 @@ export default function Settings() {
                       size={21}
                       color={theme.destructive}
                     />
-                  </TouchableOpacity>
-                </View>
+                  </View>
+                </TouchableOpacity>
                 <View
                   style={[styles.Line, { backgroundColor: theme.bordersLight }]}
                 />
-                <View
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    showAlert({
+                      title: t("Logout"),
+                      message: t("sureLogout"),
+                      buttons: [
+                        { text: t("CAN"), style: "cancel" },
+                        {
+                          text: t("Logout"),
+                          style: "destructive",
+                          onPress: async () => {
+                            try {
+                              useNotesStore.setState({ notes: [] });
+                            } catch (e) {
+                              console.log("Failed to clear notes store:", e);
+                            }
+
+                            try {
+                              await AsyncStorage.removeItem(LAST_USER_ID_KEY);
+                              useAuthStore.getState().clearAuth();
+                            } catch (e) {
+                              console.log("Failed to clear auth store:", e);
+                            }
+
+                            try {
+                              router.replace("/Auth/Login");
+                            } catch (e) {
+                              console.log("Navigation to Login failed:", e);
+                            }
+
+                            void supabase.auth
+                              .signOut({ scope: "local" })
+                              .catch((e) => {
+                                console.log("supabase.signOut() failed:", e);
+                              });
+                          },
+                        },
+                      ],
+                    });
+                  }}
                   style={[
                     styles.options,
                     { flexDirection: isRTL ? "row-reverse" : "row" },
@@ -705,47 +746,7 @@ export default function Settings() {
                   >
                     {t("Logout")}
                   </Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      showAlert({
-                        title: t("Logout"),
-                        message: t("sureLogout"),
-                        buttons: [
-                          { text: t("CAN"), style: "cancel" },
-                          {
-                            text: t("Logout"),
-                            style: "destructive",
-                            onPress: async () => {
-                              // Immediately clear local notes and auth
-                              try {
-                                useNotesStore.setState({ notes: [] });
-                              } catch (e) {
-                                console.log("Failed to clear notes store:", e);
-                              }
-
-                              try {
-                                await AsyncStorage.removeItem(LAST_USER_ID_KEY);
-                                useAuthStore.getState().clearAuth();
-                              } catch (e) {
-                                console.log("Failed to clear auth store:", e);
-                              }
-
-                              try {
-                                router.replace("/Auth/Login");
-                              } catch (e) {
-                                console.log("Navigation to Login failed:", e);
-                              }
-
-                              void supabase.auth
-                                .signOut({ scope: "local" })
-                                .catch((e) => {
-                                  console.log("supabase.signOut() failed:", e);
-                                });
-                            },
-                          },
-                        ],
-                      });
-                    }}
+                  <View
                     style={[
                       styles.DeleteBtn,
                       {
@@ -759,8 +760,8 @@ export default function Settings() {
                       size={21}
                       color={theme.destructive}
                     />
-                  </TouchableOpacity>
-                </View>
+                  </View>
+                </TouchableOpacity>
               </View>
             </View>
 
