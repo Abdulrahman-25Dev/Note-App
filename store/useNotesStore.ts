@@ -11,6 +11,7 @@ type Note = {
   content: string;
   createdAt: string;
   favorite: boolean;
+  pinned: boolean;
   deleted: boolean;
   user_id?: string;
 };
@@ -23,6 +24,7 @@ type NotesState = {
   restoreNote: (id: string) => Promise<void>;
   deletepermanentlyNote: (id: string) => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
+  togglePin: (id: string) => Promise<void>;
   updateNote: (
     id: string,
     data: { title: string; content: string },
@@ -56,7 +58,10 @@ export const useNotesStore = create<NotesState>()(
           if (!session?.user) return;
 
           // 1️⃣ جلب الملاحظات الموجودة حالياً في ذاكرة الجهاز المحلية
-          const localNotes = get().notes || [];
+          const localNotes = (get().notes || []).map((note) => ({
+            ...note,
+            pinned: note.pinned || false,
+          }));
 
           // 2️⃣ جلب بيانات السيرفر
           const { data: serverNotes, error } = await supabase
@@ -83,6 +88,7 @@ export const useNotesStore = create<NotesState>()(
                 content: n.content,
                 user_id: session.user.id,
                 favorite: n.favorite,
+                pinned: n.pinned || false,
                 deleted: n.deleted,
               }));
 
@@ -102,6 +108,7 @@ export const useNotesStore = create<NotesState>()(
               content: n.content || "",
               createdAt: n.created_at,
               favorite: n.favorite || false,
+              pinned: n.pinned || false,
               deleted: n.deleted || false,
               user_id: n.user_id,
             }));
@@ -112,11 +119,14 @@ export const useNotesStore = create<NotesState>()(
               ...formattedServerNotes.map(
                 (sNote: any) => localNotesMap.get(sNote.id) || sNote,
               ),
-            ];
+            ].sort(
+              (first: Note, second: Note) =>
+                Number(second.pinned) - Number(first.pinned),
+            );
 
             set({ notes: mergedNotes });
           }
-        } catch (e) {
+        } catch {
           console.log(
             "Offline mode: Fetching notes from local storage instead.",
           );
@@ -136,6 +146,7 @@ export const useNotesStore = create<NotesState>()(
           content,
           createdAt,
           favorite: false,
+          pinned: false,
           deleted: false,
           user_id: userId,
         };
@@ -163,7 +174,7 @@ export const useNotesStore = create<NotesState>()(
         // محاولة التحديث في السحابة
         try {
           await supabase.from("notes").update({ deleted: true }).eq("id", id);
-        } catch (e) {
+        } catch {
           console.log("Offline change: delete noted locally.");
         }
       },
@@ -178,7 +189,7 @@ export const useNotesStore = create<NotesState>()(
 
         try {
           await supabase.from("notes").update({ deleted: false }).eq("id", id);
-        } catch (e) {
+        } catch {
           console.log("Offline change: restored note locally.");
         }
       },
@@ -191,7 +202,7 @@ export const useNotesStore = create<NotesState>()(
 
         try {
           await supabase.from("notes").delete().eq("id", id);
-        } catch (e) {
+        } catch {
           console.log("Offline change: permanently deleted note locally.");
         }
       },
@@ -213,8 +224,29 @@ export const useNotesStore = create<NotesState>()(
             .from("notes")
             .update({ favorite: nextFavoriteState })
             .eq("id", id);
-        } catch (e) {
+        } catch {
           console.log("Offline change: toggled favorite locally.");
+        }
+      },
+
+      togglePin: async (id) => {
+        const noteToUpdate = get().notes.find((note) => note.id === id);
+        if (!noteToUpdate) return;
+
+        const nextPinnedState = !noteToUpdate.pinned;
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === id ? { ...note, pinned: nextPinnedState } : note,
+          ),
+        }));
+
+        try {
+          await supabase
+            .from("notes")
+            .update({ pinned: nextPinnedState })
+            .eq("id", id);
+        } catch {
+          console.log("Offline change: toggled pin locally.");
         }
       },
 
@@ -228,7 +260,7 @@ export const useNotesStore = create<NotesState>()(
 
         try {
           await supabase.from("notes").update({ title, content }).eq("id", id);
-        } catch (e) {
+        } catch {
           console.log("Offline change: updated note locally.");
         }
       },
@@ -246,7 +278,7 @@ export const useNotesStore = create<NotesState>()(
             .from("notes")
             .update({ deleted: true })
             .eq("deleted", false);
-        } catch (e) {
+        } catch {
           console.log("Offline change: deleted all notes locally.");
         }
       },
@@ -267,7 +299,7 @@ export const useNotesStore = create<NotesState>()(
             .update({ favorite: false })
             .eq("deleted", false)
             .eq("favorite", true);
-        } catch (e) {
+        } catch {
           console.log("Offline change: removed all favorites locally.");
         }
       },
@@ -280,7 +312,7 @@ export const useNotesStore = create<NotesState>()(
 
         try {
           await supabase.from("notes").delete().eq("deleted", true);
-        } catch (e) {
+        } catch {
           console.log("Offline change: emptied trash locally.");
         }
       },
@@ -298,7 +330,7 @@ export const useNotesStore = create<NotesState>()(
             .from("notes")
             .update({ deleted: false })
             .eq("deleted", true);
-        } catch (e) {
+        } catch {
           console.log("Offline change: restored all deleted notes locally.");
         }
       },

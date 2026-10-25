@@ -48,6 +48,7 @@ const Details = () => {
   );
   const restoreNote = useNotesStore((state) => state.restoreNote);
   const toggleFavorite = useNotesStore((state) => state.toggleFavorite);
+  const togglePin = useNotesStore((state) => state.togglePin);
   const updateNote = useNotesStore((state) => state.updateNote);
 
   const note = notes.find((n) => n.id === noteId);
@@ -157,6 +158,18 @@ const Details = () => {
               onPress={shareNote}
             >
               <Ionicons name="share-outline" size={22} color={mainColor} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.share, { backgroundColor: theme.card }]}
+              onPress={() => noteId && togglePin(noteId)}
+              accessibilityRole="button"
+              accessibilityLabel={note?.pinned ? "Unpin note" : "Pin note"}
+            >
+              <Ionicons
+                name={note?.pinned ? "pin" : "pin-outline"}
+                size={22}
+                color={note?.pinned ? mainColor : theme.secondary}
+              />
             </TouchableOpacity>
           </View>
           <TouchableOpacity onPress={returnToSource} style={styles.back}>

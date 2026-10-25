@@ -52,6 +52,9 @@ export default function Index() {
 
   const allNotes = useNotesStore((state) => state.notes);
   const notes = allNotes.filter((note) => !note.deleted);
+  const pinnedNotes = notes.filter((note) => note.pinned);
+  const unpinnedNotes = notes.filter((note) => !note.pinned);
+  const orderedNotes = [...pinnedNotes, ...unpinnedNotes];
   const cardAnimations = useRef(new Map<string, Animated.Value>());
   const animatedNoteIds = useRef(new Set<string>());
 
@@ -84,16 +87,24 @@ export default function Index() {
   const [search, setSearch] = useState<string>("");
   // حالة الملاحظات المفضلة لتحديث الأيقونة
 
-  const filteredNotes = notes.filter(
+  const filteredNotes = orderedNotes.filter(
     (note) =>
       note.title.toLowerCase().includes(search.toLowerCase()) ||
       note.content.toLowerCase().includes(search.toLowerCase()),
   );
   const toggleFavorite = useNotesStore((s) => s.toggleFavorite);
+  const togglePin = useNotesStore((s) => s.togglePin);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const selectedNote = notes.find((note) => note.id === selectedNoteId);
   // const delteAllNotes = useNotesStore((s) => s.deleteAllNotes);
 
   const handleFavorite = (id: string) => {
     toggleFavorite(id);
+  };
+  const handleTogglePin = () => {
+    if (!selectedNoteId) return;
+    togglePin(selectedNoteId);
+    setSelectedNoteId(null);
   };
   const showAlert = useAlertStore((s) => s.showAlert);
 
@@ -216,10 +227,16 @@ export default function Index() {
                       },
                     ]}
                     onPress={() => router.push(`/Notes/${item.id}`)}
-                    onLongPress={() =>
-                      handleCopy(`${item.title}\n${item.content}`)
-                    }
+                    onLongPress={() => setSelectedNoteId(item.id)}
                   >
+                    {item.pinned && (
+                      <Ionicons
+                        name="pin"
+                        size={14}
+                        color={mainColor}
+                        style={styles.pinIndicator}
+                      />
+                    )}
                     <TouchableOpacity
                       onPress={() => handleFavorite(item.id)}
                       style={{
@@ -306,6 +323,93 @@ export default function Index() {
             </View>
           </View>
         </SharedModal>
+        <SharedModal
+          visible={selectedNoteId !== null}
+          onClose={() => setSelectedNoteId(null)}
+          onRequestClose={() => setSelectedNoteId(null)}
+        >
+          <View
+            style={[
+              styles.noteActionModal,
+              { backgroundColor: theme.surface, borderColor: theme.borders },
+            ]}
+          >
+            <TouchableOpacity
+              accessibilityRole="button"
+              style={[
+                styles.actionMenuItem,
+                { flexDirection: isRTL ? "row-reverse" : "row" },
+              ]}
+              onPress={handleTogglePin}
+            >
+              <Ionicons
+                name={selectedNote?.pinned ? "pin-outline" : "pin"}
+                size={20}
+                color={mainColor}
+              />
+              <Text
+                style={[
+                  styles.actionMenuText,
+                  { color: mainColor, fontFamily: getBodyFont(isRTL) },
+                ]}
+              >
+                {selectedNote?.pinned
+                  ? isRTL
+                    ? "إلغاء التثبيت"
+                    : "Unpin"
+                  : isRTL
+                    ? "تثبيت"
+                    : "Pin"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              style={[
+                styles.actionMenuItem,
+                { flexDirection: isRTL ? "row-reverse" : "row" },
+              ]}
+              onPress={() => {
+                if (selectedNote) {
+                  void handleCopy(
+                    `${selectedNote.title}\n${selectedNote.content}`,
+                  );
+                }
+                setSelectedNoteId(null);
+              }}
+            >
+              <Ionicons name="copy-outline" size={21} color={mainColor} />
+              <Text
+                style={[
+                  styles.actionMenuText,
+                  { color: mainColor, fontFamily: getBodyFont(isRTL) },
+                ]}
+              >
+                {isRTL ? "نسخ" : "Copy"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              style={[
+                styles.modalCancelBtn,
+                {
+                  backgroundColor: "transparent",
+                  borderColor: theme.borders,
+                },
+              ]}
+              onPress={() => setSelectedNoteId(null)}
+            >
+              <Text
+                style={{
+                  color: theme.primary,
+                  fontWeight: "bold",
+                  fontFamily: getBodyFont(isRTL),
+                }}
+              >
+                {t("CAN")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </SharedModal>
       </SafeAreaView>
     </View>
   );
@@ -388,6 +492,11 @@ const styles = StyleSheet.create({
     height: 150,
     justifyContent: "space-between",
   },
+  pinIndicator: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+  },
   noteTitle: {
     fontSize: 14,
     fontWeight: "bold",
@@ -450,5 +559,22 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
+  },
+  noteActionModal: {
+    justifyContent: "center",
+    padding: 20,
+    borderWidth: 1,
+    borderRadius: 12,
+    width: "85%",
+    gap: 8,
+  },
+  actionMenuItem: {
+    minHeight: 48,
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 8,
+  },
+  actionMenuText: {
+    fontSize: 16,
   },
 });

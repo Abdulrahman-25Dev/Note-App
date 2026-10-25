@@ -7,6 +7,7 @@ export type PendingAddNote = {
   content: string;
   createdAt: string;
   favorite: boolean;
+  pinned: boolean;
   deleted: boolean;
   user_id?: string;
 };
@@ -67,6 +68,7 @@ export const flushPendingOps = (): Promise<void> => {
             created_at: note.createdAt,
             user_id: session.user.id,
             favorite: note.favorite,
+            pinned: note.pinned || false,
             deleted: note.deleted,
           });
 
