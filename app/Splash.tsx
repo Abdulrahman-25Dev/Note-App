@@ -1,15 +1,10 @@
 import React from "react";
-import { View, StyleSheet, Text } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import LottieView from "lottie-react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
 import { Colors } from "../Constants/Colors";
-import {
-  getBodyFont,
-  getDisplayFont,
-  getTextDirection,
-  Spacing,
-} from "../Constants/Layout";
-import { Typography } from "../Constants/Typography";
+import { getBodyFont, getDisplayFont, Spacing } from "../Constants/Layout";
 import { useThemeStore } from "../store/useThemeStore";
 
 interface SplashProps {
@@ -23,7 +18,12 @@ export default function Splash({ onFinish }: SplashProps) {
   const theme = isDarkMode ? Colors.dark : Colors.light;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <LinearGradient
+      colors={[theme.background, theme.surface]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
       {/* أنيميشن الريشة كما هو */}
       <LottieView
         source={require("../assets/animations/feather.json")}
@@ -40,11 +40,9 @@ export default function Splash({ onFinish }: SplashProps) {
         <Text
           style={[
             styles.title,
-            Typography.displayLarge,
             {
               color: theme.primary,
               fontFamily: getDisplayFont(isRTL),
-              textAlign: getTextDirection(isRTL),
             },
           ]}
         >
@@ -55,18 +53,16 @@ export default function Splash({ onFinish }: SplashProps) {
         <Text
           style={[
             styles.subtitle,
-            Typography.bodyLarge,
             {
               color: theme.secondary,
               fontFamily: getBodyFont(isRTL),
-              textAlign: getTextDirection(isRTL),
             },
           ]}
         >
           دوّن أفكارك بنعومة
         </Text>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -81,21 +77,19 @@ const styles = StyleSheet.create({
     height: 280,
   },
   textContainer: {
-    marginTop: -20, // لتقريب النص قليلاً من الريشة
+    marginTop: Spacing.lg,
     alignItems: "center",
   },
   title: {
-    color: "#F2F2F2", // أبيض فاتح جداً
-    fontSize: 40, // تكبير قليل لاعطاء فخامة
+    fontSize: 42,
     fontWeight: "bold",
-    letterSpacing: 1.5,
+    letterSpacing: 1,
     textAlign: "center",
   },
   subtitle: {
-    color: "#AAAAAA", // لون رمادي خافت وهادئ
     fontSize: 16,
-    fontWeight: "300", // خط أنحف
+    fontWeight: "300",
     marginTop: Spacing.sm,
-    letterSpacing: 0.5,
+    textAlign: "center",
   },
 });
