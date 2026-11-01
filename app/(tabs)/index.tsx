@@ -4,7 +4,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  FlatList,
   Pressable,
   Animated,
   Easing,
@@ -25,6 +24,7 @@ import SharedModal from "../../components/sharedModal";
 import { useNotesStore } from "../../store/useNotesStore";
 import { useAlertStore } from "../../store/useAlertStore";
 import { getBodyFont, Radius, Spacing } from "../../Constants/Layout";
+import { FlashList } from "@shopify/flash-list";
 
 export default function Index() {
   useEffect(() => {
@@ -195,7 +195,8 @@ export default function Index() {
               )}
             </View>
           </View>
-          <FlatList
+          <FlashList
+            masonry
             data={filteredNotes}
             keyExtractor={(item) => item.id}
             numColumns={2}
@@ -254,13 +255,13 @@ export default function Index() {
                     </TouchableOpacity>
                     <Text
                       style={[styles.noteTitle, { color: theme.primary }]}
-                      numberOfLines={1}
+                      numberOfLines={2}
                     >
                       {item.title}
                     </Text>
                     <Text
                       style={[styles.noteContent, { color: theme.secondary }]}
-                      numberOfLines={1}
+                      numberOfLines={5}
                     >
                       {item.content}
                     </Text>
@@ -479,17 +480,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#EEF2FF",
   },
   noteContainer: {
-    flex: 1,
     margin: 5,
   },
   note: {
-    flex: 1,
     borderWidth: 0.5,
     borderRadius: 15,
     padding: 15,
+    paddingBottom: 40,
     backgroundColor: "#fff",
     elevation: 2,
-    height: 150,
+    minHeight: 150,
     justifyContent: "space-between",
   },
   pinIndicator: {
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
   noteTitle: {
     fontSize: 14,
     fontWeight: "bold",
-    marginBottom: 15,
+    marginBottom: 8,
     textAlign: "right",
   },
   noteContent: {

@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   TextInput,
   Pressable,
   Animated,
@@ -20,6 +19,7 @@ import { useTranslation } from "react-i18next";
 import SharedModal from "../../components/sharedModal";
 import { useNotesStore } from "../../store/useNotesStore";
 import { getBodyFont, Radius, Spacing } from "../../Constants/Layout";
+import { FlashList } from "@shopify/flash-list";
 
 // مكون صفحة المفضلة، مبني بنفس طريقة سلة المحذوفات
 const Favorites = () => {
@@ -174,7 +174,8 @@ const Favorites = () => {
               )}
             </View>
           </View>
-          <FlatList
+          <FlashList
+            masonry
             data={filteredNotes}
             keyExtractor={(item) => item.id}
             numColumns={2}
@@ -208,13 +209,13 @@ const Favorites = () => {
                     >
                       <Text
                         style={[styles.noteTitle, { color: theme.primary }]}
-                        numberOfLines={1}
+                        numberOfLines={2}
                       >
                         {item.title}
                       </Text>
                       <Text
                         style={[styles.noteContent, { color: theme.secondary }]}
-                        numberOfLines={1}
+                        numberOfLines={5}
                       >
                         {item.content}
                       </Text>
@@ -343,24 +344,22 @@ const styles = StyleSheet.create({
     textAlignVertical: "center",
   },
   noteContainer: {
-    flex: 1,
     margin: 5,
   },
   note: {
-    flex: 1,
     borderWidth: 1,
     borderColor: "#A7C7FF",
     borderRadius: 15,
     padding: 15,
     backgroundColor: "#fff",
     elevation: 2,
-    height: 150,
+    minHeight: 150,
     justifyContent: "space-between",
   },
   noteTitle: {
     fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 15,
+    marginBottom: 8,
     textAlign: "right",
   },
   noteContent: {

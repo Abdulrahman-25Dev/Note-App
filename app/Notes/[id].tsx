@@ -190,6 +190,9 @@ const Details = () => {
             onChangeText={setTitle}
             placeholderTextColor={theme.secondary}
             placeholder="..."
+            multiline
+            scrollEnabled={false}
+            textAlignVertical="top"
           />
           <View style={styles.line} />
           <Text style={[styles.date, { color: theme.secondary }]}>
@@ -308,6 +311,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: Spacing.lg,
     padding: 0,
+    width: "100%",
   },
   date: {
     fontSize: 14,

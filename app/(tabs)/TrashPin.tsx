@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   TextInput,
   Pressable,
   Animated,
@@ -18,6 +17,7 @@ import { Colors } from "../../Constants/Colors";
 import { useTranslation } from "react-i18next";
 import SharedModal from "../../components/sharedModal";
 import { useNotesStore } from "../../store/useNotesStore";
+import { FlashList } from "@shopify/flash-list";
 import {
   getBodyFont,
   getTitleFont,
@@ -377,7 +377,8 @@ const TrashPin = () => {
               )}
             </View>
           </SharedModal>
-          <FlatList
+          <FlashList
+            masonry
             data={filteredNotes}
             keyExtractor={(item) => item.id}
             numColumns={2}
@@ -427,7 +428,7 @@ const TrashPin = () => {
                               fontFamily: getTitleFont(isRTL),
                             },
                           ]}
-                          numberOfLines={1}
+                          numberOfLines={2}
                         >
                           {item.title}
                         </Text>
@@ -462,7 +463,7 @@ const TrashPin = () => {
                             fontFamily: getBodyFont(isRTL),
                           },
                         ]}
-                        numberOfLines={2}
+                        numberOfLines={5}
                       >
                         {item.content}
                       </Text>
@@ -546,20 +547,15 @@ const styles = StyleSheet.create({
     textAlignVertical: "center",
   },
   noteContainer: {
-    flex: 1,
     margin: 5,
   },
   note: {
-    flex: 1,
     borderWidth: 1,
     borderColor: "#A7C7FF",
     borderRadius: 15,
     padding: 15,
-    height: 150,
+    minHeight: 150,
     justifyContent: "space-between",
-  },
-  noteTouchable: {
-    flex: 1,
   },
   noteHeader: {
     minHeight: 32,
