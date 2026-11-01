@@ -8,7 +8,7 @@ import { AppState, I18nManager } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Splash from "./Splash";
 import CustomAlert from "../components/CustomAlert";
-import { flushPendingOps } from "../store/pendingQueue";
+import { flushPendingOps } from "../store/pendingQueue"; 
 
 // لإجبار التطبيق ما ينعكس أبداً
 I18nManager.allowRTL(false);
