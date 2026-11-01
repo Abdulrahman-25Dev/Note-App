@@ -1,8 +1,22 @@
-import { Feather, Ionicons } from "@expo/vector-icons";
 import NetInfo from "@react-native-community/netinfo";
 import { useFocusEffect } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { router } from "expo-router";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Coffee,
+  Info,
+  LockKeyhole,
+  LogIn,
+  LogOut,
+  Moon,
+  Pencil,
+  Smartphone,
+  Sun,
+  Trash2,
+} from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -23,6 +37,7 @@ import {
   Radius,
   Spacing,
 } from "../../Constants/Layout";
+import { useAppTheme } from "../../hooks/useAppTheme";
 import {
   getCachedAvatar,
   getCachedProfileData,
@@ -33,7 +48,11 @@ import {
 import { useAlertStore } from "../../store/useAlertStore";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useNotesStore } from "../../store/useNotesStore";
-import { useThemeStore } from "../../store/useThemeStore";
+import {
+  ColorKey,
+  themeColors,
+  useThemeStore,
+} from "../../store/useThemeStore";
 import { supabase } from "../../supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ColorPicker, {
@@ -41,8 +60,23 @@ import ColorPicker, {
   HueSlider,
   Preview,
 } from "reanimated-color-picker";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
 
 const FALLBACK_PICKER_COLOR = "#00B4D8";
+const BOTTOM_SHEET_SNAP_POINTS = ["65%"];
+const APP_COLOR_OPTIONS: {
+  id: Exclude<ColorKey, "custom">;
+  hex: string;
+}[] = [
+  { id: "teal", hex: themeColors.teal },
+  { id: "purple", hex: themeColors.purple },
+  { id: "green", hex: themeColors.green },
+  { id: "yellow", hex: themeColors.yellow },
+  { id: "rose", hex: themeColors.rose },
+];
 
 const normalizePickerColor = (color: unknown): string => {
   if (typeof color !== "string") return FALLBACK_PICKER_COLOR;
@@ -55,6 +89,19 @@ const normalizePickerColor = (color: unknown): string => {
     : FALLBACK_PICKER_COLOR;
 };
 
+const getColorWithAlpha = (color: string, alpha: number) => {
+  const hex = normalizePickerColor(color).slice(1);
+  const rgb =
+    hex.length === 3 || hex.length === 4
+      ? [...hex.slice(0, 3)].map((channel) => channel.repeat(2)).join("")
+      : hex.slice(0, 6);
+  const red = parseInt(rgb.slice(0, 2), 16);
+  const green = parseInt(rgb.slice(2, 4), 16);
+  const blue = parseInt(rgb.slice(4, 6), 16);
+
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+};
+
 export default function Settings() {
   const { width: windowWidth } = useWindowDimensions();
   const session = useAuthStore((state) => state.session);
@@ -62,12 +109,25 @@ export default function Settings() {
   const sessionStatus = useAuthStore((state) => state.sessionStatus);
   const verifySession = useAuthStore((state) => state.verifySession);
   const { t, i18n } = useTranslation();
-  const { isDarkMode, themeMode, setThemeMode, setMainColor, setCustomColor } =
-    useThemeStore();
+  const { isDarkMode, themeMode, setThemeMode } = useAppTheme();
+  const setMainColor = useThemeStore((state) => state.setMainColor);
+  const setCustomColor = useThemeStore((state) => state.setCustomColor);
+  const setLanguage = useThemeStore((state) => state.setLanguage);
   const mainColor = useThemeStore((state) => state.mainColor);
   const colorKey = useThemeStore((state) => state.colorKey);
   const theme = isDarkMode ? Colors.dark : Colors.light;
   const isRTL = i18n.language === "ar";
+  const bottomSheetRef = useRef<BottomSheet>(null);
+  const openColorPickerAfterSheet = useRef(false);
+  const openSheet = () => bottomSheetRef.current?.expand();
+  const closeSheet = () => bottomSheetRef.current?.close();
+  const openCustomColorPicker = () => {
+    const currentColor = normalizePickerColor(mainColor);
+    selectedColorRef.current = currentColor;
+    setSelectedColor(currentColor);
+    openColorPickerAfterSheet.current = true;
+    closeSheet();
+  };
 
   const [colorPickerVisible, setColorPickerVisible] = useState(false);
   const [selectedColor, setSelectedColor] = useState(() =>
@@ -274,12 +334,6 @@ export default function Settings() {
   const shouldPromptLogin =
     sessionStatus === "invalid" || (hasPreviousLogin && !session);
 
-  const colorsOptions = [
-    { id: "teal", hex: "#00B4D8", name: "أزرق مخضر" },
-    { id: "green", hex: "#10B981", name: "أخضر" },
-    { id: "yellow", hex: "#F59E0B", name: "أصفر" },
-    { id: "rose", hex: "#F43F5E", name: "وردي" },
-  ];
   const currentColorName =
     colorKey === "custom"
       ? t("customColor")
@@ -324,11 +378,11 @@ export default function Settings() {
         >
           {value}
         </Text>
-        <Ionicons
-          name={isRTL ? "chevron-back" : "chevron-forward"}
-          size={20}
-          color={theme.tertiary}
-        />
+        {isRTL ? (
+          <ChevronLeft size={20} color={theme.tertiary} />
+        ) : (
+          <ChevronRight size={20} color={theme.tertiary} />
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -425,11 +479,7 @@ export default function Settings() {
                       { flexDirection: isRTL ? "row-reverse" : "row" },
                     ]}
                   >
-                    <Ionicons
-                      name="log-in-outline"
-                      size={13}
-                      color={mainColor}
-                    />
+                    <LogIn size={13} color={mainColor} />
                     <Text
                       style={[
                         styles.profileSessionStatusAction,
@@ -472,48 +522,12 @@ export default function Settings() {
                   t(
                     `themeMode${themeMode.charAt(0).toUpperCase()}${themeMode.slice(1)}`,
                   ),
-                  () =>
-                    showAlert({
-                      title: t("theme"),
-                      message: "",
-                      buttons: [
-                        {
-                          text: t("themeModeLight"),
-                          onPress: () => setThemeMode("light"),
-                        },
-                        {
-                          text: t("themeModeDark"),
-                          onPress: () => setThemeMode("dark"),
-                        },
-                        {
-                          text: t("themeModeSystem"),
-                          onPress: () => setThemeMode("system"),
-                        },
-                      ],
-                    }),
+                  openSheet,
                 )}
-                {renderAppearanceRow(t("appColor"), currentColorName, () =>
-                  showAlert({
-                    title: t("appColor"),
-                    message: "",
-                    buttons: [
-                      ...colorsOptions.map((color) => ({
-                        text: t(
-                          `color${color.id.charAt(0).toUpperCase()}${color.id.slice(1)}`,
-                        ),
-                        onPress: () => setMainColor(color.id as any),
-                      })),
-                      {
-                        text: t("customColor"),
-                        onPress: () => {
-                          const currentColor = normalizePickerColor(mainColor);
-                          selectedColorRef.current = currentColor;
-                          setSelectedColor(currentColor);
-                          setColorPickerVisible(true);
-                        },
-                      },
-                    ],
-                  }),
+                {renderAppearanceRow(
+                  t("appColor"),
+                  currentColorName,
+                  openSheet,
                 )}
                 {renderAppearanceRow(
                   t("language"),
@@ -522,27 +536,7 @@ export default function Settings() {
                       ? "languageArabic"
                       : "languageEnglish",
                   ),
-                  () =>
-                    showAlert({
-                      title: t("language"),
-                      message: "",
-                      buttons: [
-                        {
-                          text: t("languageArabic"),
-                          onPress: () => {
-                            useThemeStore.getState().setLanguage("ar");
-                            i18n.changeLanguage("ar");
-                          },
-                        },
-                        {
-                          text: t("languageEnglish"),
-                          onPress: () => {
-                            useThemeStore.getState().setLanguage("en");
-                            i18n.changeLanguage("en");
-                          },
-                        },
-                      ],
-                    }),
+                  openSheet,
                   true,
                 )}
               </View>
@@ -600,11 +594,7 @@ export default function Settings() {
                       },
                     ]}
                   >
-                    <Ionicons
-                      name="create-outline"
-                      size={21}
-                      color={mainColor}
-                    />
+                    <Pencil size={21} color={mainColor} />
                   </View>
                 </TouchableOpacity>
                 <View
@@ -639,11 +629,7 @@ export default function Settings() {
                       },
                     ]}
                   >
-                    <Ionicons
-                      name="lock-closed-outline"
-                      size={21}
-                      color={mainColor}
-                    />
+                    <LockKeyhole size={21} color={mainColor} />
                   </View>
                 </TouchableOpacity>
                 <View
@@ -678,11 +664,7 @@ export default function Settings() {
                       },
                     ]}
                   >
-                    <Ionicons
-                      name="trash-outline"
-                      size={21}
-                      color={theme.destructive}
-                    />
+                    <Trash2 size={21} color={theme.destructive} />
                   </View>
                 </TouchableOpacity>
                 <View
@@ -755,11 +737,7 @@ export default function Settings() {
                       },
                     ]}
                   >
-                    <Ionicons
-                      name="log-out-outline"
-                      size={21}
-                      color={theme.destructive}
-                    />
+                    <LogOut size={21} color={theme.destructive} />
                   </View>
                 </TouchableOpacity>
               </View>
@@ -899,11 +877,7 @@ export default function Settings() {
                       },
                     ]}
                   >
-                    <Ionicons
-                      name="information-circle-outline"
-                      size={21}
-                      color={mainColor}
-                    />
+                    <Info size={21} color={mainColor} />
                   </View>
                 </Pressable>
                 <View
@@ -936,13 +910,280 @@ export default function Settings() {
                       },
                     ]}
                   >
-                    <Feather name="coffee" size={21} color={mainColor} />
+                    <Coffee size={21} color={mainColor} />
                   </View>
                 </View>
               </View>
             </View>
           </View>
         </ScrollView>
+        <BottomSheet
+          ref={bottomSheetRef}
+          index={-1}
+          snapPoints={BOTTOM_SHEET_SNAP_POINTS}
+          enablePanDownToClose
+          onChange={(index) => {
+            if (index === -1 && openColorPickerAfterSheet.current) {
+              openColorPickerAfterSheet.current = false;
+              setColorPickerVisible(true);
+            }
+          }}
+          backdropComponent={(props) => (
+            <BottomSheetBackdrop
+              {...props}
+              appearsOnIndex={0}
+              disappearsOnIndex={-1}
+              opacity={0.5}
+              pressBehavior="close"
+            />
+          )}
+          backgroundStyle={{ backgroundColor: theme.card }}
+          handleIndicatorStyle={{ backgroundColor: theme.tertiary }}
+        >
+          <BottomSheetView
+            style={[
+              styles.bottomSheetContent,
+              { direction: isRTL ? "rtl" : "ltr" },
+            ]}
+          >
+            <View
+              style={[
+                styles.bottomSheetHeader,
+                {
+                  flexDirection: isRTL ? "row-reverse" : "row",
+                  justifyContent: isRTL ? "flex-start" : "flex-end",
+                },
+              ]}
+            ></View>
+            <Text
+              style={[
+                styles.bottomSheetSectionTitle,
+                {
+                  color: theme.primary,
+                  fontFamily: getBodyFont(isRTL),
+                  textAlign: isRTL ? "left" : "left",
+                },
+              ]}
+            >
+              {t("appColor")}
+            </Text>
+            <View
+              style={[
+                styles.colorPreferenceOptions,
+                { flexDirection: isRTL ? "row-reverse" : "row" },
+              ]}
+            >
+              {APP_COLOR_OPTIONS.map((option) => {
+                const isSelected = colorKey === option.id;
+
+                return (
+                  <Pressable
+                    key={option.id}
+                    accessibilityRole="radio"
+                    accessibilityLabel={t(
+                      `color${option.id.charAt(0).toUpperCase()}${option.id.slice(1)}`,
+                    )}
+                    accessibilityState={{ checked: isSelected }}
+                    onPress={() => setMainColor(option.id)}
+                    style={[
+                      styles.colorPreferenceOption,
+                      {
+                        borderColor: isSelected ? mainColor : theme.borders,
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.colorPreferenceSwatch,
+                        { backgroundColor: option.hex },
+                      ]}
+                    >
+                      {isSelected && (
+                        <Check
+                          size={20}
+                          color={getContrastingColor(option.hex)}
+                        />
+                      )}
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ checked: colorKey === "custom" }}
+              onPress={openCustomColorPicker}
+              style={[
+                styles.customColorOption,
+                {
+                  backgroundColor: theme.surface,
+                  borderColor:
+                    colorKey === "custom" ? mainColor : theme.borders,
+                  flexDirection: isRTL ? "row-reverse" : "row",
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.customColorOptionText,
+                  {
+                    color: colorKey === "custom" ? mainColor : theme.primary,
+                    fontFamily: getBodyFont(isRTL),
+                  },
+                ]}
+              >
+                {t("customColor")}
+              </Text>
+              <View
+                style={[
+                  styles.customColorPreview,
+                  {
+                    backgroundColor:
+                      colorKey === "custom" ? mainColor : theme.borders,
+                  },
+                ]}
+              />
+            </Pressable>
+            <Text
+              style={[
+                styles.bottomSheetSectionTitle,
+                {
+                  color: theme.primary,
+                  fontFamily: getBodyFont(isRTL),
+                  textAlign: isRTL ? "left" : "left",
+                },
+              ]}
+            >
+              {t("theme")}
+            </Text>
+            <View
+              style={[
+                styles.preferenceOptions,
+                { flexDirection: isRTL ? "row-reverse" : "row" },
+              ]}
+            >
+              {(
+                [
+                  {
+                    mode: "light",
+                    label: t("themeModeLight"),
+                    Icon: Sun,
+                  },
+                  {
+                    mode: "dark",
+                    label: t("themeModeDark"),
+                    Icon: Moon,
+                  },
+                  {
+                    mode: "system",
+                    label: t("themeModeSystem"),
+                    Icon: Smartphone,
+                  },
+                ] as const
+              ).map((option) => {
+                const isSelected = themeMode === option.mode;
+                const ThemeIcon = option.Icon;
+
+                return (
+                  <Pressable
+                    key={option.mode}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: isSelected }}
+                    onPress={() => setThemeMode(option.mode)}
+                    style={[
+                      styles.preferenceOption,
+                      {
+                        backgroundColor: isSelected
+                          ? getColorWithAlpha(mainColor, 0.12)
+                          : theme.surface,
+                        borderColor: isSelected ? mainColor : theme.borders,
+                      },
+                    ]}
+                  >
+                    <ThemeIcon
+                      size={20}
+                      color={isSelected ? mainColor : theme.secondary}
+                    />
+                    <Text
+                      style={[
+                        styles.preferenceOptionText,
+                        {
+                          color: isSelected ? mainColor : theme.primary,
+                          fontFamily: getBodyFont(isRTL),
+                        },
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <View style={styles.bottomSheetLanguageSection}>
+              <Text
+                style={[
+                  styles.bottomSheetSectionTitle,
+                  {
+                    color: theme.primary,
+                    fontFamily: getBodyFont(isRTL),
+                    textAlign: isRTL ? "left" : "left",
+                  },
+                ]}
+              >
+                {t("language")}
+              </Text>
+              <View
+                style={[
+                  styles.preferenceOptions,
+                  { flexDirection: isRTL ? "row-reverse" : "row" },
+                ]}
+              >
+                {(
+                  [
+                    { language: "ar", label: t("languageArabic") },
+                    { language: "en", label: t("languageEnglish") },
+                  ] as const
+                ).map((option) => {
+                  const isSelected = i18n.language === option.language;
+
+                  return (
+                    <Pressable
+                      key={option.language}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: isSelected }}
+                      onPress={() => {
+                        setLanguage(option.language);
+                        void i18n.changeLanguage(option.language);
+                      }}
+                      style={[
+                        styles.preferenceOption,
+                        styles.languagePreferenceOption,
+                        {
+                          backgroundColor: isSelected
+                            ? getColorWithAlpha(mainColor, 0.12)
+                            : theme.surface,
+                          borderColor: isSelected ? mainColor : theme.borders,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.preferenceOptionText,
+                          {
+                            color: isSelected ? mainColor : theme.primary,
+                            fontFamily: getBodyFont(isRTL),
+                          },
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          </BottomSheetView>
+        </BottomSheet>
       </SafeAreaView>
     </View>
   );
@@ -1100,6 +1341,92 @@ const styles = StyleSheet.create({
   },
   appearanceRowValue: {
     fontSize: 14,
+  },
+  bottomSheetContent: {
+    flex: 1,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xl,
+  },
+  bottomSheetHeader: {
+    alignItems: "center",
+    marginBottom: Spacing.md,
+  },
+  bottomSheetCloseButton: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bottomSheetSectionTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: Spacing.sm,
+  },
+  preferenceOptions: {
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  preferenceOption: {
+    flex: 1,
+    minHeight: 52,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.xs,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: Spacing.sm,
+  },
+  languagePreferenceOption: {
+    flexDirection: "row",
+  },
+  preferenceOptionText: {
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  colorPreferenceOptions: {
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  colorPreferenceOption: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderRadius: Radius.round,
+  },
+  colorPreferenceSwatch: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: Radius.round,
+  },
+  customColorOption: {
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  customColorOptionText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  customColorPreview: {
+    width: 22,
+    height: 22,
+    borderRadius: Radius.round,
+  },
+  bottomSheetLanguageSection: {
+    marginTop: "auto",
   },
   Lang: {
     padding: 10,

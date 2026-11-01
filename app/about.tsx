@@ -9,8 +9,9 @@ import {
   TouchableOpacity,
   Linking,
 } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
+import { Feather } from "lucide-react-native";
 import i18n from "../i18n/i18n";
 import { router } from "expo-router";
 import { getBodyFont, getTitleFont } from "../Constants/Layout";
@@ -43,11 +44,7 @@ function AboutScreen() {
       {/* Logo/Icon */}
       <View style={[styles.header, { backgroundColor: theme.card }]}>
         <View style={styles.iconContainer}>
-          <MaterialCommunityIcons
-            name="feather"
-            size={40}
-            color={mainColor}
-          />
+          <Feather size={54} color={mainColor} />
         </View>
         <Text
           style={[

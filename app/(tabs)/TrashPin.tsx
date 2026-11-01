@@ -557,6 +557,9 @@ const styles = StyleSheet.create({
     minHeight: 150,
     justifyContent: "space-between",
   },
+  noteTouchable: {
+    flex: 1,
+  },
   noteHeader: {
     minHeight: 32,
     alignItems: "center",

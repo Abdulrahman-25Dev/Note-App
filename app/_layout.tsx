@@ -5,6 +5,7 @@ import NetInfo, { NetInfoState } from "@react-native-community/netinfo";
 import { useFonts } from "expo-font";
 import { useEffect, useRef, useState } from "react";
 import { AppState, I18nManager } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Splash from "./Splash";
 import CustomAlert from "../components/CustomAlert";
@@ -83,9 +84,11 @@ export default function RootLayout() {
   }, [showSplash]);
 
   return (
-    <SafeAreaProvider>
-      {showSplash || !fontsLoaded ? <Splash /> : <Slot />}
-      <CustomAlert />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        {showSplash || !fontsLoaded ? <Splash /> : <Slot />}
+        <CustomAlert />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
